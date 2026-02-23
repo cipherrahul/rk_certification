@@ -27,6 +27,9 @@ export default function Navbar() {
                         <Link href="/about" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
                             About Us
                         </Link>
+                        <Link href="/careers" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+                            Careers
+                        </Link>
                         <Link href="/verify" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
                             Verify Certificate
                         </Link>
