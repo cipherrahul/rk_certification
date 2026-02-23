@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { format } from "date-fns";
 import { CalendarIcon, Loader2 } from "lucide-react";
 
@@ -56,9 +55,9 @@ export default function CertificateFormPage({ params }: { params: { slug: string
     });
 
     // Update real-time data for layout
-    form.watch((data, { name, type }) => {
+    form.watch((data) => {
         if (data) {
-            // @ts-ignore
+            // @ts-expect-error Type instantiation is excessively deep and possibly infinite
             setCurrentData(data as CertificateFormValues);
         }
     });
@@ -87,10 +86,10 @@ export default function CertificateFormPage({ params }: { params: { slug: string
             } else {
                 toast({ title: "Error", description: result.error || "Failed to create certificate record.", variant: "destructive" });
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             toast({
                 title: "Error",
-                description: error.message || "Something went wrong.",
+                description: error instanceof Error ? error.message : "Something went wrong.",
                 variant: "destructive",
             });
         } finally {
@@ -259,7 +258,7 @@ export default function CertificateFormPage({ params }: { params: { slug: string
                                 <FormField
                                     control={form.control}
                                     name="photo"
-                                    render={({ field: { value, onChange, ...fieldProps } }) => (
+                                    render={({ field: { onChange, value: _val, ...fieldProps } }) => (
                                         <FormItem>
                                             <FormLabel>Student Photo (Optional)</FormLabel>
                                             <FormControl>

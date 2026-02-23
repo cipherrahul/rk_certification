@@ -37,7 +37,7 @@ export async function generateAndUploadCertificatePDF(elementId: string, fileNam
         const filePath = `certificates/${fileName}.pdf`;
 
         // We upload via the client (Requires RLS policy permitting this)
-        const { data, error } = await supabase.storage
+        const { error } = await supabase.storage
             .from("certificates")
             .upload(filePath, pdfBlob, {
                 contentType: "application/pdf",

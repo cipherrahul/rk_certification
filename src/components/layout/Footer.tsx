@@ -1,7 +1,13 @@
+"use client";
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { GraduationCap } from 'lucide-react';
 
 export default function Footer() {
+    const pathname = usePathname();
+    if (pathname?.startsWith('/admin')) return null;
+
     return (
         <footer className="border-t bg-muted/50">
             <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
@@ -16,9 +22,6 @@ export default function Footer() {
                     <div className="flex gap-6">
                         <Link href="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                             Home
-                        </Link>
-                        <Link href="/certifications" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                            Certifications
                         </Link>
                         <Link href="/verify" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                             Verify Certificate

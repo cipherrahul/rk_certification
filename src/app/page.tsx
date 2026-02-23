@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award, ShieldCheck, Zap, BookOpen } from 'lucide-react';
+import { Award, ShieldCheck, Zap, BookOpen, Receipt } from 'lucide-react';
 import { StudentProfileCarousel } from '@/components/home/StudentProfileCarousel';
 
 const categories = [
@@ -60,7 +60,7 @@ export default function Home() {
             Secure, verifiable, and instantly accessible.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/certifications">
+            <Link href="/admin/certifications">
               <Button size="lg" className="h-12 px-8 text-base shadow-lg hover:shadow-xl transition-all w-full sm:w-auto">
                 Explore Certifications
               </Button>
@@ -128,7 +128,7 @@ export default function Home() {
             {categories.map((category) => (
               <Link
                 key={category}
-                href={`/certifications/${category.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, '-')}`}
+                href={`/admin/certifications/${category.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, '-')}`}
                 className="group"
               >
                 <Card className="h-full border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-300 dark:border-slate-800 dark:hover:border-indigo-700 transition-all cursor-pointer bg-white/50 backdrop-blur-sm dark:bg-slate-950/50">
@@ -171,19 +171,78 @@ export default function Home() {
       {/* Student Profile Section */}
       <StudentProfileCarousel />
 
+      {/* Fee & Certificate Verification Section */}
+      <section className="py-20 bg-white dark:bg-slate-950">
+        <div className="container px-4 md:px-6 mx-auto max-w-5xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold tracking-tight mb-4">Verification Portal</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Instantly verify certificates and fee receipts using their unique ID numbers.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Certificate Verify Card */}
+            <Card className="border-slate-200 shadow-sm hover:shadow-md dark:border-slate-800 transition-all bg-gradient-to-br from-indigo-50 to-white dark:from-slate-900 dark:to-slate-950">
+              <CardHeader>
+                <div className="p-3 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 w-fit mb-3">
+                  <ShieldCheck className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <CardTitle>Certificate Verification</CardTitle>
+                <CardDescription>
+                  Verify the authenticity of an RK Institution certificate using its unique certificate ID.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link href="/verify">
+                  <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
+                    Verify Certificate
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+            {/* Fee Receipt Verify Card */}
+            <Card className="border-slate-200 shadow-sm hover:shadow-md dark:border-slate-800 transition-all bg-gradient-to-br from-emerald-50 to-white dark:from-slate-900 dark:to-slate-950">
+              <CardHeader>
+                <div className="p-3 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 w-fit mb-3">
+                  <Receipt className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <CardTitle>Fee Receipt Verification</CardTitle>
+                <CardDescription>
+                  Verify a fee payment receipt by entering the unique receipt number issued by RK Institution.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link href="/verify-receipt">
+                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+                    Verify Fee Receipt
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-24 relative overflow-hidden bg-indigo-600 dark:bg-indigo-900 text-white">
         <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))]"></div>
         <div className="container px-4 md:px-6 relative z-10 text-center mx-auto max-w-3xl">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6">Ready to Verify a Certificate?</h2>
+          <h2 className="text-3xl md:text-5xl font-bold mb-6">Ready to Get Started?</h2>
           <p className="text-xl text-indigo-100 mb-10">
-            Our verification system ensures authenticity and trust. Enter a unique ID to instantly verify any RK Institution certificate.
+            Explore our certification programs or verify an existing certificate instantly.
           </p>
-          <Link href="/verify">
-            <Button size="lg" variant="secondary" className="h-14 px-10 text-lg font-medium shadow-xl hover:shadow-2xl transition-all text-indigo-900">
-              Verify Now
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/verify">
+              <Button size="lg" variant="secondary" className="h-14 px-10 text-lg font-medium shadow-xl hover:shadow-2xl transition-all text-indigo-900">
+                Verify Certificate
+              </Button>
+            </Link>
+            <Link href="/verify-receipt">
+              <Button size="lg" variant="outline" className="h-14 px-10 text-lg font-medium border-white text-white hover:bg-white/10 transition-all">
+                Verify Receipt
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
     </div>

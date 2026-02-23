@@ -15,7 +15,7 @@ export async function middleware(request: NextRequest) {
                     return request.cookies.getAll();
                 },
                 setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value));
+                    cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
                     supabaseResponse = NextResponse.next({
                         request,
                     });
@@ -32,7 +32,10 @@ export async function middleware(request: NextRequest) {
 
     // Basic route protection
     const path = request.nextUrl.pathname;
-    if (path.startsWith('/admin/dashboard') && !user) {
+
+    // Protect all admin pages except login
+    const isAdminRoute = path.startsWith('/admin') && path !== '/admin/login';
+    if (isAdminRoute && !user) {
         return NextResponse.redirect(new URL('/admin/login', request.url));
     }
 

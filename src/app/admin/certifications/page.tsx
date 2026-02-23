@@ -35,7 +35,7 @@ export default function CertificationsPage() {
                 {categories.map((category) => (
                     <Link
                         key={category}
-                        href={`/certifications/${category.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, '-')}`}
+                        href={`/admin/certifications/${category.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, '-')}`}
                         className="group"
                     >
                         <Card className="h-full border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-300 dark:border-slate-800 dark:hover:border-indigo-700 transition-all cursor-pointer bg-white dark:bg-slate-950">

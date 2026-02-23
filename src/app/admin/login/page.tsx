@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Lock, Mail, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -45,7 +44,8 @@ export default function AdminLogin() {
                 router.push("/admin/dashboard");
                 router.refresh(); // Refresh to apply middleware changes
             }
-        } catch (err) {
+        } catch (err: unknown) {
+            console.error(err);
             toast({
                 title: "Error",
                 description: "An unexpected error occurred.",

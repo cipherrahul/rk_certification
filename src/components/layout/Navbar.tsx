@@ -1,8 +1,14 @@
+"use client";
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { GraduationCap } from 'lucide-react';
 
 export default function Navbar() {
+    const pathname = usePathname();
+    if (pathname?.startsWith('/admin')) return null;
+
     return (
         <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -17,9 +23,6 @@ export default function Navbar() {
                     <div className="hidden md:flex gap-6 items-center">
                         <Link href="/" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
                             Home
-                        </Link>
-                        <Link href="/certifications" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-                            Certifications
                         </Link>
                         <Link href="/verify" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
                             Verify Certificate
