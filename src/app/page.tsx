@@ -116,27 +116,54 @@ export default function Home() {
       </section>
 
       {/* Categories Section */}
-      <section className="py-20 bg-slate-50 dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800">
-        <div className="container px-4 md:px-6 mx-auto">
-          <div className="text-center mb-12">
+      <section className="py-20 bg-slate-50 dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800 overflow-hidden relative">
+        <div className="container px-4 md:px-6 mx-auto relative z-10 mb-12">
+          <div className="text-center">
             <h2 className="text-3xl font-bold tracking-tight mb-4">Certification Categories</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Choose from our wide range of professional certifications designed to boost your career.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+        </div>
+
+        {/* Left & Right Gradient Fades */}
+        <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-slate-50 dark:from-slate-900 to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-slate-50 dark:from-slate-900 to-transparent z-10 pointer-events-none" />
+
+        <div className="relative flex overflow-x-hidden group pb-8">
+          <div className="flex animate-marquee whitespace-nowrap gap-6 group-hover:[animation-play-state:paused] min-w-max px-3">
             {categories.map((category) => (
               <Link
                 key={category}
                 href={`/admin/certifications/${category.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, '-')}`}
-                className="group"
+                className="w-80 inline-block focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-xl"
               >
-                <Card className="h-full border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-300 dark:border-slate-800 dark:hover:border-indigo-700 transition-all cursor-pointer bg-white/50 backdrop-blur-sm dark:bg-slate-950/50">
+                <Card className="h-full border-slate-200 shadow-sm hover:shadow-lg hover:border-indigo-400 dark:border-slate-800 dark:hover:border-indigo-600 transition-all duration-300 cursor-pointer bg-white/50 backdrop-blur-sm dark:bg-slate-950/50 hover:-translate-y-2 group/card">
                   <CardHeader>
-                    <div className="mb-4 p-3 rounded-lg bg-indigo-50 w-fit text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400 group-hover:scale-110 group-hover:bg-indigo-100 transition-all">
+                    <div className="mb-4 p-3 rounded-lg bg-indigo-50 w-fit text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400 group-hover/card:scale-110 group-hover/card:bg-indigo-100 group-hover/card:rotate-3 transition-all duration-300">
                       <BookOpen className="h-6 w-6" />
                     </div>
-                    <CardTitle className="text-lg">{category}</CardTitle>
+                    <CardTitle className="text-lg group-hover/card:text-indigo-700 dark:group-hover/card:text-indigo-400 transition-colors break-words whitespace-normal">{category}</CardTitle>
+                  </CardHeader>
+                </Card>
+              </Link>
+            ))}
+          </div>
+
+          <div className="flex animate-marquee whitespace-nowrap gap-6 group-hover:[animation-play-state:paused] min-w-max px-3" aria-hidden="true">
+            {categories.map((category) => (
+              <Link
+                key={`dup-${category}`}
+                href={`/admin/certifications/${category.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, '-')}`}
+                className="w-80 inline-block focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-xl"
+                tabIndex={-1}
+              >
+                <Card className="h-full border-slate-200 shadow-sm hover:shadow-lg hover:border-indigo-400 dark:border-slate-800 dark:hover:border-indigo-600 transition-all duration-300 cursor-pointer bg-white/50 backdrop-blur-sm dark:bg-slate-950/50 hover:-translate-y-2 group/card">
+                  <CardHeader>
+                    <div className="mb-4 p-3 rounded-lg bg-indigo-50 w-fit text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400 group-hover/card:scale-110 group-hover/card:bg-indigo-100 group-hover/card:rotate-3 transition-all duration-300">
+                      <BookOpen className="h-6 w-6" />
+                    </div>
+                    <CardTitle className="text-lg group-hover/card:text-indigo-700 dark:group-hover/card:text-indigo-400 transition-colors break-words whitespace-normal">{category}</CardTitle>
                   </CardHeader>
                 </Card>
               </Link>

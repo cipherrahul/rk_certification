@@ -27,6 +27,9 @@ export default function Navbar() {
                         <Link href="/verify" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
                             Verify Certificate
                         </Link>
+                        <Link href="/verify-receipt" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+                            Verify Fee Receipt
+                        </Link>
                     </div>
 
                     <div className="flex items-center gap-4">
