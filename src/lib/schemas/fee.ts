@@ -5,13 +5,13 @@ export const PAYMENT_MODES = ["Cash", "Online", "Cheque", "DD"] as const;
 export const feePaymentFormSchema = z.object({
     month: z.string().min(2, "Month is required"),
     totalFees: z.coerce
-        .number({ invalid_type_error: "Enter a valid amount" })
+        .number()
         .positive("Total fees must be positive"),
     paidAmount: z.coerce
-        .number({ invalid_type_error: "Enter a valid amount" })
+        .number()
         .nonnegative("Paid amount cannot be negative"),
-    paymentDate: z.date({ message: "Payment date is required" }),
-    paymentMode: z.enum(PAYMENT_MODES, { message: "Select a payment mode" }),
+    paymentDate: z.date(),
+    paymentMode: z.enum(PAYMENT_MODES),
     notes: z.string().optional(),
 }).refine((d) => d.paidAmount <= d.totalFees, {
     message: "Paid amount cannot exceed total fees",

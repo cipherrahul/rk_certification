@@ -62,7 +62,7 @@ export default function CareersPage() {
                                                     {job.title}
                                                 </h3>
                                                 {job.badge && (
-                                                    <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${badgeStyles[job.badgeColor] || "bg-slate-100 text-slate-700"}`}>
+                                                    <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${job.badgeColor ? (badgeStyles[job.badgeColor] || "bg-slate-100 text-slate-700") : "bg-slate-100 text-slate-700"}`}>
                                                         {job.badge}
                                                     </span>
                                                 )}

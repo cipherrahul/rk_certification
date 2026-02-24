@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { LogOut, Plus, Search, Download, Trash2, FileText, Award, GraduationCap, Users } from "lucide-react";
+import { Plus, Search, Download, Trash2, FileText, Award, GraduationCap, Users, UserCog } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,10 @@ export default async function AdminDashboardPage() {
         .from('students')
         .select('*', { count: 'exact', head: true });
 
+    const { count: totalTeachers } = await supabase
+        .from('teachers')
+        .select('*', { count: 'exact', head: true });
+
     const recentCount = certificates?.filter(
         c => new Date(c.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
     ).length || 0;
@@ -49,14 +53,20 @@ export default async function AdminDashboardPage() {
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Overview Overview</h1>
-                    <p className="text-muted-foreground mt-1 text-sm">Welcome back! Here is what's happening today.</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Overview</h1>
+                    <p className="text-muted-foreground mt-1 text-sm">Welcome back! Here is what&apos;s happening today.</p>
                 </div>
-                <div className="flex items-center gap-3 w-full sm:w-auto">
+                <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
                     <Link href="/admin/students" className="hidden sm:inline-block">
                         <Button variant="outline" className="shadow-sm">
                             <Users className="w-4 h-4 mr-2" />
-                            Manage Students
+                            Students
+                        </Button>
+                    </Link>
+                    <Link href="/admin/teachers" className="hidden sm:inline-block">
+                        <Button variant="outline" className="shadow-sm">
+                            <UserCog className="w-4 h-4 mr-2" />
+                            Teachers
                         </Button>
                     </Link>
                     <Link href="/admin/certifications" className="w-full sm:w-auto">
@@ -69,7 +79,7 @@ export default async function AdminDashboardPage() {
             </div>
 
             {/* Analytics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <Card className="shadow-sm border-slate-200 dark:border-slate-800 transition-all hover:shadow-md">
                     <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                         <CardTitle className="text-sm font-medium text-muted-foreground">Total Certificates</CardTitle>
@@ -109,6 +119,20 @@ export default async function AdminDashboardPage() {
                         <div className="text-3xl font-bold text-slate-900 dark:text-white">{recentCount}</div>
                         <p className="text-xs text-muted-foreground mt-1">
                             Certificates issued in last 30 days
+                        </p>
+                    </CardContent>
+                </Card>
+                <Card className="shadow-sm border-slate-200 dark:border-slate-800 transition-all hover:shadow-md">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Total Teachers</CardTitle>
+                        <div className="p-2 bg-teal-50 dark:bg-teal-900/20 rounded-lg">
+                            <UserCog className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-3xl font-bold text-slate-900 dark:text-white">{totalTeachers || 0}</div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            <Link href="/admin/teachers" className="text-teal-600 dark:text-teal-400 hover:underline">Manage faculty →</Link>
                         </p>
                     </CardContent>
                 </Card>

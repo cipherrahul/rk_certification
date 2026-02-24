@@ -57,7 +57,6 @@ export default function CertificateFormPage({ params }: { params: { slug: string
     // Update real-time data for layout
     form.watch((data) => {
         if (data) {
-            // @ts-expect-error Type instantiation is excessively deep and possibly infinite
             setCurrentData(data as CertificateFormValues);
         }
     });
@@ -141,7 +140,7 @@ export default function CertificateFormPage({ params }: { params: { slug: string
                                     name="fatherName"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Father's Name</FormLabel>
+                                            <FormLabel>Father&apos;s Name</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="Richard Doe" {...field} />
                                             </FormControl>
@@ -258,7 +257,7 @@ export default function CertificateFormPage({ params }: { params: { slug: string
                                 <FormField
                                     control={form.control}
                                     name="photo"
-                                    render={({ field: { onChange, value: _val, ...fieldProps } }) => (
+                                    render={({ field: { onChange, value: _value, ...fieldProps } }) => (
                                         <FormItem>
                                             <FormLabel>Student Photo (Optional)</FormLabel>
                                             <FormControl>
