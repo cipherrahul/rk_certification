@@ -37,14 +37,6 @@ export function AdminNavbar() {
 
             {/* Right side Profile & Actions */}
             <div className="flex items-center gap-2 shrink-0">
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-8 w-8 rounded-full shrink-0">
-                    <Search className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground relative h-8 w-8 rounded-full shrink-0">
-                    <Bell className="w-4 h-4" />
-                    <span className="absolute top-1.5 right-2 w-1.5 h-1.5 bg-brand rounded-full border border-background"></span>
-                </Button>
-
                 <div className="flex items-center justify-center pl-3 ml-1 border-l border-border/60 h-8">
                     <button className="flex items-center justify-center w-7 h-7 shrink-0 rounded-full bg-brand/20 text-brand text-xs font-bold ring-1 ring-border/50 hover:ring-brand/50 transition-all duration-300">
                         AD

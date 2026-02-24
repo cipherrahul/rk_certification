@@ -1,8 +1,10 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { CheckCircle, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { CheckCircle, Download } from "lucide-react";
 
 interface PaymentRecord {
     id: string;
@@ -14,6 +16,8 @@ interface PaymentRecord {
     payment_date: string;
     payment_mode: string;
     notes?: string;
+    whatsapp_status: string;
+    pdf_url?: string;
 }
 
 interface PaymentHistoryTableProps {
@@ -41,7 +45,8 @@ export function PaymentHistoryTable({ payments }: PaymentHistoryTableProps) {
                         <TableHead>Balance</TableHead>
                         <TableHead>Mode</TableHead>
                         <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead>Status (WA)</TableHead>
+                        <TableHead>Receipt</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -63,14 +68,28 @@ export function PaymentHistoryTable({ payments }: PaymentHistoryTableProps) {
                                 {new Date(p.payment_date).toLocaleDateString("en-IN")}
                             </TableCell>
                             <TableCell>
-                                {Number(p.remaining_amount) === 0 ? (
-                                    <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-medium">
-                                        <CheckCircle className="w-3.5 h-3.5" /> Paid
-                                    </div>
+                                <Badge
+                                    variant="outline"
+                                    className={cn(
+                                        "text-[10px] px-1.5 py-0",
+                                        p.whatsapp_status === "sent" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                                            p.whatsapp_status === "failed" ? "bg-red-50 text-red-700 border-red-200" :
+                                                "bg-slate-50 text-slate-600 border-slate-200"
+                                    )}
+                                >
+                                    {p.whatsapp_status === "sent" && <CheckCircle className="w-2.5 h-2.5 mr-1" />}
+                                    {p.whatsapp_status.toUpperCase()}
+                                </Badge>
+                            </TableCell>
+                            <TableCell>
+                                {p.pdf_url ? (
+                                    <a href={p.pdf_url} target="_blank" rel="noopener noreferrer">
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-indigo-600">
+                                            <Download className="w-3.5 h-3.5" />
+                                        </Button>
+                                    </a>
                                 ) : (
-                                    <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 text-xs font-medium">
-                                        <Clock className="w-3.5 h-3.5" /> Partial
-                                    </div>
+                                    <span className="text-[10px] text-muted-foreground italic">Generating...</span>
                                 )}
                             </TableCell>
                         </TableRow>

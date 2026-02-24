@@ -45,22 +45,67 @@ export async function createFeePaymentAction(
         const receiptNumber = generateReceiptNumber(count || 0);
         const remainingAmount = Number(data.totalFees) - Number(data.paidAmount);
 
-        const { error } = await supabase.from("fee_payments").insert({
-            receipt_number: receiptNumber,
-            student_id: studentId,
-            month: data.month,
-            total_fees: data.totalFees,
-            paid_amount: data.paidAmount,
-            remaining_amount: remainingAmount,
-            payment_date: data.paymentDate.toISOString().split("T")[0],
-            payment_mode: data.paymentMode,
-            notes: data.notes || null,
-        });
+        const { data: record, error } = await supabase
+            .from("fee_payments")
+            .insert({
+                receipt_number: receiptNumber,
+                student_id: studentId,
+                month: data.month,
+                total_fees: data.totalFees,
+                paid_amount: data.paidAmount,
+                remaining_amount: remainingAmount,
+                payment_date: data.paymentDate.toISOString().split("T")[0],
+                payment_mode: data.paymentMode,
+                notes: data.notes || null,
+            })
+            .select("id, students(first_name, last_name, mobile)")
+            .single();
 
-        if (error) {
+        if (error || !record) {
             console.error("Fee payment error:", error);
             return { success: false, error: "Failed to record payment." };
         }
+
+        // ── WhatsApp & PDF Automation ────────────────────────
+        // Triggered asynchronously to not block the response
+        (async () => {
+            try {
+                const { generateFeeReceiptPDF } = await import("@/lib/pdf/receipt-pdf");
+                const { sendWhatsAppNotification, updateWhatsAppStatus } = await import("@/lib/services/whatsapp");
+
+                // 1. Generate & Upload PDF
+                const pdfUrl = await generateFeeReceiptPDF(record.id);
+                if (pdfUrl) {
+                    await updateWhatsAppStatus("fee_payments", record.id, {
+                        whatsapp_status: "processing",
+                        pdf_url: pdfUrl
+                    });
+
+                    // 2. Send WhatsApp
+                    const student = record.students as any;
+                    const message = `Hello ${student.first_name} ${student.last_name}, your fee payment of ${data.paidAmount} for ${data.month} has been received. Please find your receipt attached. \n\nThank you, \nRK Institution`;
+
+                    const waResult = await sendWhatsAppNotification({
+                        phone: student.mobile,
+                        message,
+                        mediaUrl: pdfUrl,
+                        fileName: `Receipt_${receiptNumber}.pdf`
+                    });
+
+                    // 3. Update Result
+                    await updateWhatsAppStatus("fee_payments", record.id, {
+                        whatsapp_status: waResult.success ? "sent" : "failed",
+                        whatsapp_message_id: waResult.messageId,
+                        whatsapp_error: waResult.error
+                    });
+                }
+            } catch (err) {
+                console.error("Async fee automation error:", err);
+            }
+        })();
+
+        revalidatePath(`/admin/students/${studentId}`);
+        return { success: true, receiptNumber };
 
         revalidatePath(`/admin/students/${studentId}`);
         return { success: true, receiptNumber };

@@ -42,6 +42,8 @@ interface SalaryRecord {
     payment_date: string | null;
     slip_notes: string | null;
     created_at: string;
+    whatsapp_status: string;
+    pdf_url?: string;
 }
 
 interface Teacher {
@@ -263,7 +265,7 @@ export function SalaryManagement({ teacher, initialRecords }: SalaryManagementPr
                             <table className="w-full text-sm">
                                 <thead className="bg-slate-50 dark:bg-slate-900/30 border-b border-slate-200 dark:border-slate-800">
                                     <tr>
-                                        {["Slip No.", "Period", "Basic", "Allowances", "Deductions", "Net Pay", "Status", "Actions"].map(h => (
+                                        {["Slip No.", "Period", "Net Pay", "Status", "WA", "Actions"].map(h => (
                                             <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">{h}</th>
                                         ))}
                                     </tr>
@@ -286,40 +288,46 @@ export function SalaryManagement({ teacher, initialRecords }: SalaryManagementPr
                                                             : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800"
                                                     }
                                                 >
-                                                    {record.payment_status === "Paid" ? (
-                                                        <CheckCircle className="w-3 h-3 mr-1 inline" />
-                                                    ) : (
-                                                        <Clock className="w-3 h-3 mr-1 inline" />
-                                                    )}
                                                     {record.payment_status}
                                                 </Badge>
                                             </td>
                                             <td className="px-4 py-2.5">
+                                                <Badge
+                                                    variant="outline"
+                                                    className={
+                                                        record.whatsapp_status === "sent"
+                                                            ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                                                            : record.whatsapp_status === "failed" ? "bg-red-50 text-red-700 border-red-200" : "bg-slate-50 text-slate-500 border-slate-200"
+                                                    }
+                                                >
+                                                    {record.whatsapp_status?.toUpperCase() || "PENDING"}
+                                                </Badge>
+                                            </td>
+                                            <td className="px-4 py-2.5">
                                                 <div className="flex items-center gap-1">
-                                                    {record.payment_status === "Pending" && (
+                                                    {record.pdf_url ? (
+                                                        <a href={record.pdf_url} target="_blank" rel="noopener noreferrer">
+                                                            <Button
+                                                                variant="ghost" size="icon"
+                                                                className="h-7 w-7 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+                                                                title="View Stored PDF"
+                                                            >
+                                                                <Download className="w-3.5 h-3.5" />
+                                                            </Button>
+                                                        </a>
+                                                    ) : (
                                                         <Button
                                                             variant="ghost" size="icon"
-                                                            className="h-7 w-7 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
-                                                            title="Mark as Paid"
-                                                            disabled={updatingId === record.id}
-                                                            onClick={() => handleMarkPaid(record)}
+                                                            className="h-7 w-7 text-slate-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+                                                            title="Download Slip (Local)"
+                                                            disabled={downloadingId === record.id}
+                                                            onClick={() => handleDownloadSlip(record)}
                                                         >
-                                                            {updatingId === record.id
+                                                            {downloadingId === record.id
                                                                 ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                                : <CheckCircle className="w-3.5 h-3.5" />}
+                                                                : <Download className="w-3.5 h-3.5" />}
                                                         </Button>
                                                     )}
-                                                    <Button
-                                                        variant="ghost" size="icon"
-                                                        className="h-7 w-7 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
-                                                        title="Download Slip"
-                                                        disabled={downloadingId === record.id}
-                                                        onClick={() => handleDownloadSlip(record)}
-                                                    >
-                                                        {downloadingId === record.id
-                                                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                            : <Download className="w-3.5 h-3.5" />}
-                                                    </Button>
                                                     <Button
                                                         variant="ghost" size="icon"
                                                         className="h-7 w-7 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30"
