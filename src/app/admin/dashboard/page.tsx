@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Plus, Search, Download, Trash2, FileText, Award, GraduationCap, Users, UserCog } from "lucide-react";
+import { Plus, Search, Download, Trash2, FileText, Award, GraduationCap, Users, UserCog, FileBadge } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -67,6 +67,18 @@ export default async function AdminDashboardPage() {
                         <Button variant="outline" className="shadow-sm border-border/60 hover:bg-accent hover:text-foreground">
                             <UserCog className="w-4 h-4 mr-2" />
                             Teachers
+                        </Button>
+                    </Link>
+                    <Link href="/admin/certifications" className="hidden sm:inline-block">
+                        <Button variant="outline" className="shadow-sm border-border/60 hover:bg-accent hover:text-foreground">
+                            <FileBadge className="w-4 h-4 mr-2" />
+                            Certifications
+                        </Button>
+                    </Link>
+                    <Link href="/admin/offer-letter" className="hidden sm:inline-block">
+                        <Button variant="outline" className="shadow-sm border-border/60 hover:bg-accent hover:text-foreground">
+                            <FileText className="w-4 h-4 mr-2" />
+                            Offer Letters
                         </Button>
                     </Link>
                     <Link href="/admin/certifications" className="w-full sm:w-auto">
