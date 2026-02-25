@@ -11,10 +11,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, CheckCircle, Upload, AlertCircle, FileText } from "lucide-react";
-import { Job } from "@/lib/data/jobs";
+// Removed static Job import
 
 interface ApplicationFormProps {
-    job: Job;
+    job: {
+        id: string;
+        title: string;
+    };
 }
 
 const RESUME_SIZE_LIMIT_KB = 50;
