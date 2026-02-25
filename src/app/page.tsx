@@ -29,12 +29,12 @@ const stats = [
 ];
 
 const programs = [
-  { title: "JEE/NEET Preparation", students: "2.1k+", icon: Star, highlight: "Top Results" },
-  { title: "Board Exam Coaching", students: "3.2k+", icon: CheckCircle2, highlight: "Class 10 & 12" },
-  { title: "Full Stack Development", students: "1.2k+", icon: Globe, highlight: "Most Popular" },
-  { title: "Data Science & AI", students: "0.8k+", icon: TrendingUp, highlight: "Trending" },
-  { title: "Digital Marketing", students: "1.5k+", icon: Zap, highlight: "Career Ready" },
-  { title: "Cloud Computing", students: "0.5k+", icon: BookOpen, highlight: "Advanced" },
+  { slug: "jee-ultimate", title: "JEE Preparation", students: "2.1k+", icon: Star, highlight: "Top Results" },
+  { slug: "neet-medical", title: "NEET Foundation", students: "3.2k+", icon: CheckCircle2, highlight: "PCB Focus" },
+  { slug: "primary-foundation", title: "Primary Foundation", students: "1.2k+", icon: Globe, highlight: "Most Popular" },
+  { slug: "secondary-excellence", title: "Secondary Excellence", students: "0.8k+", icon: TrendingUp, highlight: "Trending" },
+  { slug: "cuet-success", title: "CUET Success", students: "1.5k+", icon: Zap, highlight: "Career Ready" },
+  { slug: "full-stack-web", title: "Full Stack Development", students: "2.5k+", icon: Globe, highlight: "Tech Fast-Track" },
 ];
 
 export default function Home() {
@@ -172,7 +172,7 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {programs.map((program, idx) => (
               <motion.div
                 key={idx}
@@ -181,26 +181,28 @@ export default function Home() {
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
               >
-                <Card className="glass h-full border-none hover:-translate-y-2 transition-all duration-300 group cursor-pointer overflow-hidden">
-                  <CardHeader className="relative pb-0">
-                    <div className="absolute top-4 right-4 px-2 py-1 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
-                      {program.highlight}
-                    </div>
-                    <div className="mb-6 p-4 rounded-2xl bg-white dark:bg-slate-800 w-fit shadow-sm group-hover:shadow-blue-500/20 group-hover:shadow-xl transition-all duration-500">
-                      <program.icon className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <CardTitle className="text-xl group-hover:text-blue-600 transition-colors">{program.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm font-medium">
-                      <Users className="h-4 w-4" />
-                      {program.students} Students Enrolled
-                    </div>
-                    <div className="mt-6 flex items-center text-blue-600 text-sm font-bold opacity-0 group-hover:opacity-100 translate-x-[-10px] group-hover:translate-x-0 transition-all">
-                      Learn More <ArrowRight className="ml-2 h-4 w-4" />
-                    </div>
-                  </CardContent>
-                </Card>
+                <Link href={`/programs/${program.slug}`}>
+                  <Card className="glass h-full border-white/5 hover:border-blue-500/50 hover:bg-white/10 hover:-translate-y-2 transition-all duration-300 group cursor-pointer overflow-hidden p-0.5">
+                    <CardHeader className="relative p-6 pb-2">
+                      <div className="absolute top-4 right-4 px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[9px] font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+                        {program.highlight}
+                      </div>
+                      <div className="mb-4 p-3 rounded-2xl bg-white dark:bg-slate-800 w-fit shadow-sm group-hover:shadow-blue-500/20 group-hover:shadow-xl transition-all duration-500">
+                        <program.icon className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">{program.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 pt-0">
+                      <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm font-medium">
+                        <Users className="h-4 w-4" />
+                        {program.students} Students Enrolled
+                      </div>
+                      <div className="mt-6 flex items-center text-blue-600 text-sm font-bold opacity-0 group-hover:opacity-100 translate-x-[-10px] group-hover:translate-x-0 transition-all">
+                        Learn More <ArrowRight className="ml-2 h-4 w-4" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
               </motion.div>
             ))}
           </div>

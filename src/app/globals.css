@@ -6,24 +6,34 @@
   .text-balance {
     text-wrap: balance;
   }
+
   .glass {
-    @apply bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl;
+    @apply bg-white/10 backdrop-blur-md border border-white/20 shadow-xl;
   }
+
   .dark .glass {
-    @apply bg-slate-900/70 backdrop-blur-lg border border-white/10 shadow-2xl;
+    @apply bg-slate-900/20 backdrop-blur-md border border-white/10 shadow-2xl;
   }
+
   .animate-slow-spin {
     animation: rotate 20s linear infinite;
   }
+
   @keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+      transform: rotate(0deg);
+    }
+
+    to {
+      transform: rotate(360deg);
+    }
   }
 }
 
 @layer base {
   :root {
-    --brand: 221.2 83.2% 53.3%; /* Modern Blue */
+    --brand: 221.2 83.2% 53.3%;
+    /* Modern Blue */
     --brand-foreground: 210 40% 98%;
     --background: 210 40% 98%;
     --foreground: 222.2 84% 4.9%;
@@ -46,6 +56,7 @@
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.75rem;
   }
+
   .dark {
     --brand: 217.2 91.2% 59.8%;
     --brand-foreground: 222.2 84% 4.9%;
