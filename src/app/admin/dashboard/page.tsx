@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Plus, Download, Trash2, FileText, Award, GraduationCap, Users, UserCog, FileBadge } from "lucide-react";
+import { Plus, Download, Trash2, FileText, Award, GraduationCap, Users, UserCog, FileBadge, Building, TrendingUp } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -101,6 +101,18 @@ export default async function AdminDashboardPage() {
                     <p className="text-muted-foreground mt-1 text-sm">Welcome back! Here is what&apos;s happening today.</p>
                 </div>
                 <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
+                    <Link href="/admin/branches" className="hidden sm:inline-block">
+                        <Button variant="outline" className="shadow-sm border-border/60 hover:bg-accent hover:text-foreground">
+                            <Building className="w-4 h-4 mr-2" />
+                            Branches
+                        </Button>
+                    </Link>
+                    <Link href="/admin/branches/analytics" className="hidden sm:inline-block">
+                        <Button variant="outline" className="shadow-sm border-border/60 hover:bg-accent hover:text-foreground">
+                            <TrendingUp className="w-4 h-4 mr-2" />
+                            Analytics
+                        </Button>
+                    </Link>
                     <Link href="/admin/students" className="hidden sm:inline-block">
                         <Button variant="outline" className="shadow-sm border-border/60 hover:bg-accent hover:text-foreground">
                             <Users className="w-4 h-4 mr-2" />
