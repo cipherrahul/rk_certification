@@ -23,15 +23,28 @@ import {
 import { PROGRAMS } from '@/data/programs';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { generateBrochure } from '@/lib/pdf/brochure-generator';
 
 export default function ProgramDetailPage({ params }: { params: { slug: string } }) {
     const { slug } = params;
     const program = PROGRAMS.find(p => p.slug === slug);
     const [openFaq, setOpenFaq] = useState<number | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
 
     if (!program) {
         notFound();
     }
+
+    const handleGetBrochure = async () => {
+        setIsGenerating(true);
+        try {
+            await generateBrochure(program);
+        } catch (error) {
+            console.error('Failed to generate brochure:', error);
+        } finally {
+            setIsGenerating(false);
+        }
+    };
 
     const sections = [
         { title: 'Faculty Support', items: ['Expert guidance from industry leaders', 'Dedicated doubt-solving counters', 'Personalized attention'], icon: Users },
@@ -104,8 +117,14 @@ export default function ProgramDetailPage({ params }: { params: { slug: string }
                                         Enroll Now
                                     </Button>
                                 </Link>
-                                <Button variant="outline" size="lg" className="h-16 px-10 rounded-2xl border-white/10 bg-white/5 text-white hover:bg-white/10 font-bold text-lg">
-                                    Get Brochure
+                                <Button
+                                    variant="outline"
+                                    size="lg"
+                                    className="h-16 px-10 rounded-2xl border-white/10 bg-white/5 text-white hover:bg-white/10 font-bold text-lg disabled:opacity-50"
+                                    onClick={handleGetBrochure}
+                                    disabled={isGenerating}
+                                >
+                                    {isGenerating ? 'Generating...' : 'Get Brochure'}
                                 </Button>
                             </div>
                         </motion.div>
@@ -283,6 +302,50 @@ export default function ProgramDetailPage({ params }: { params: { slug: string }
                                 </Link>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Leadership Section */}
+            <section className="py-24 bg-slate-900/50 relative overflow-hidden">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-600/5 via-transparent to-transparent blur-3xl pointer-events-none" />
+                <div className="container mx-auto px-4 relative z-10">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl md:text-5xl font-black mb-4">Meet Our <span className="text-blue-600">Visionaries.</span></h2>
+                        <p className="text-slate-400">Leading the way in transformative education and technical excellence.</p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
+                        {[
+                            {
+                                name: "Manish Choudhary",
+                                role: "Founder & Mathematics Expert",
+                                bio: "M.Sc Mathematics with a mission to simplify competitive learning for regular students.",
+                                img: "/images/faculty/manish.jpg"
+                            },
+                            {
+                                name: "Rahul Choudhary",
+                                role: "Co-founder & Software Engineer",
+                                bio: "B.Tech Computer Science leading our technical innovation and professional tracks.",
+                                img: "/images/faculty/rahul_mentor.png"
+                            }
+                        ].map((m, idx) => (
+                            <motion.div
+                                key={idx}
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: idx * 0.1 }}
+                                className="glass p-8 rounded-[3rem] border-white/5 flex flex-col items-center text-center group"
+                            >
+                                <div className="h-48 w-48 rounded-full overflow-hidden mb-8 border-4 border-blue-600/20 group-hover:border-blue-600 transition-colors duration-500 shadow-2xl">
+                                    <img src={m.img} alt={m.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                </div>
+                                <h3 className="text-2xl font-black mb-2">{m.name}</h3>
+                                <p className="text-blue-500 font-bold mb-4 uppercase text-xs tracking-[0.2em]">{m.role}</p>
+                                <p className="text-slate-400 italic text-sm leading-relaxed">{m.bio}</p>
+                            </motion.div>
+                        ))}
                     </div>
                 </div>
             </section>
