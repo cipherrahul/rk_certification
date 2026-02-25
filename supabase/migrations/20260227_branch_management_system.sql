@@ -56,7 +56,7 @@ DECLARE
 BEGIN
     -- Insert default branch
     INSERT INTO public.branches (name, code, city, state, address, contact_number, email, opening_date, status)
-    VALUES ('Adarsh Nagar Branch', 'RK-AN-01', 'Delhi', 'Delhi', 'Adarsh Nagar, Delhi', '0000000000', 'adarsh@rk-inst.com', '2020-01-01', 'Active')
+    VALUES ('Adarsh Nagar Branch', 'RK-AN-01', 'Delhi', 'Delhi', 'Adarsh Nagar, Delhi', '7533042633', 'info.rkinstitution2016@gmail.com', '2016-04-02', 'Active')
     ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name
     RETURNING id INTO default_branch_id;
 

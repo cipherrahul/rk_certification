@@ -171,21 +171,25 @@ export async function getBranchAnalyticsAction(branchId: string) {
         const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
 
         // 3. Student Count
-        const { count: studentCount, error: stuError } = await supabase
+        const { count: studentCount } = await supabase
             .from("students")
             .select("*", { count: "exact", head: true })
             .eq("branch_id", branchId);
 
-        if (stuError) throw stuError;
+        const { count: teacherCount } = await supabase
+            .from("teachers")
+            .select("*", { count: "exact", head: true })
+            .eq("branch_id", branchId);
 
         return {
             success: true,
             data: {
-                totalStudents: studentCount || 0,
                 totalRevenue,
                 totalExpenses,
                 netProfit,
-                profitMargin: profitMargin.toFixed(2),
+                profitMargin: totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : 0,
+                totalStudents: studentCount || 0,
+                totalTeachers: teacherCount || 0,
             }
         };
     } catch (err: any) {

@@ -80,6 +80,8 @@ export async function createStudentAction(
             payment_start_date: data.paymentStartDate.toISOString().split("T")[0],
             payment_mode: data.paymentMode,
             photo_url: photoUrl,
+            branch_id: data.branchId,
+            class_id: data.classId,
         });
 
         if (insertError) {

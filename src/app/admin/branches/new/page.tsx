@@ -26,7 +26,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { branchSchema, BranchFormValues } from "@/lib/schemas/branch";
 import { createBranchAction } from "@/lib/actions/branch.action";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { DatePicker } from "@/components/ui/date-picker";
 
 export default function NewBranchPage() {

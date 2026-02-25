@@ -78,6 +78,8 @@ export async function createTeacherAction(
             basic_salary: data.basicSalary,
             allowances: data.allowances,
             photo_url: photoUrl,
+            branch_id: data.branchId,
+            role: data.role,
         });
 
         if (insertError) {
@@ -202,6 +204,8 @@ export async function updateTeacherAction(
                 basic_salary: data.basicSalary,
                 allowances: data.allowances,
                 photo_url: photoUrl,
+                branch_id: data.branchId,
+                role: data.role,
             })
             .eq("id", id);
 

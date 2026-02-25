@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { studentFormSchema, StudentFormValues, COURSES } from "@/lib/schemas/student";
 import { createStudentAction } from "@/lib/actions/student.action";
+import { getBranchesAction } from "@/lib/actions/branch.action";
 
 export function StudentEnrollmentForm() {
     const { toast } = useToast();
@@ -30,6 +31,9 @@ export function StudentEnrollmentForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const [photoBase64, setPhotoBase64] = useState<string | undefined>(undefined);
+    const [branches, setBranches] = useState<any[]>([]);
+    const searchParams = useSearchParams();
+    const queryBranchId = searchParams.get("branchId");
 
     const form = useForm<StudentFormValues>({
         resolver: zodResolver(studentFormSchema),
@@ -45,7 +49,15 @@ export function StudentEnrollmentForm() {
             admissionFee: 0,
             monthlyFeeAmount: 0,
             paymentMode: "Cash",
+            branchId: queryBranchId || "",
+            classId: "",
         },
+    });
+
+    useState(() => {
+        getBranchesAction().then(res => {
+            if (res.success) setBranches(res.data);
+        });
     });
 
     function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -198,6 +210,26 @@ export function StudentEnrollmentForm() {
                                 <FormItem>
                                     <FormLabel>Academic Session</FormLabel>
                                     <FormControl><Input placeholder="e.g. 2026-27" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField control={form.control} name="branchId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Branch</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value || queryBranchId || ""}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a branch" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {branches.map((b) => (
+                                                <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                     <FormMessage />
                                 </FormItem>
                             )}

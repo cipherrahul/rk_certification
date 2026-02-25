@@ -22,35 +22,117 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { getBranchByIdAction, getBranchAnalyticsAction } from "@/lib/actions/branch.action";
 import { getStudentsAction } from "@/lib/actions/student.action";
+import { getTeachersAction } from "@/lib/actions/teacher.action";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { createBranchClassAction, createBranchExpenseAction } from "@/lib/actions/branch.action";
+import { useToast } from "@/hooks/use-toast";
 
 export default function BranchDetailPage() {
     const { id } = useParams();
     const [branch, setBranch] = useState<any>(null);
     const [analytics, setAnalytics] = useState<any>(null);
     const [students, setStudents] = useState<any[]>([]);
+    const [teachers, setTeachers] = useState<any[]>([]);
+    const [classes, setClasses] = useState<any[]>([]);
+    const [expenses, setExpenses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const { toast } = useToast();
+
+    // Dialog States
+    const [isClassDialogOpen, setIsClassDialogOpen] = useState(false);
+    const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         async function fetchData() {
-            const [branchRes, analyticRes, studentRes] = await Promise.all([
+            setLoading(true);
+            const [branchRes, analyticRes, studentRes, teacherRes] = await Promise.all([
                 getBranchByIdAction(id as string),
                 getBranchAnalyticsAction(id as string),
-                getStudentsAction() // Need to filter this server-side or client-side for the branch
+                getStudentsAction(),
+                getTeachersAction()
             ]);
 
-            if (branchRes.success) setBranch(branchRes.data);
+            if (branchRes.success) {
+                setBranch(branchRes.data);
+                setClasses(branchRes.data.branch_classes || []);
+                setExpenses(branchRes.data.branch_expenses || []);
+            }
             if (analyticRes.success) setAnalytics(analyticRes.data);
             if (studentRes.success) {
-                // Filter students for this branch
                 setStudents(studentRes.data.filter((s: any) => s.branch_id === id));
+            }
+            if (teacherRes.success) {
+                setTeachers(teacherRes.data.filter((t: any) => t.branch_id === id));
             }
             setLoading(false);
         }
         fetchData();
     }, [id]);
+
+    const handleCreateClass = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        const formData = new FormData(e.currentTarget);
+        const data = {
+            branchId: id as string,
+            name: formData.get("name") as string,
+            courseType: formData.get("courseType") as string,
+            duration: formData.get("duration") as string,
+            feeStructure: {
+                admission: Number(formData.get("admission")),
+                monthly: Number(formData.get("monthly")),
+                exam: Number(formData.get("exam")),
+            }
+        };
+
+        const res = await createBranchClassAction(data as any);
+        if (res.success) {
+            toast({ title: "Success", description: "Class created successfully" });
+            setIsClassDialogOpen(false);
+            // Refresh data
+            window.location.reload();
+        } else {
+            toast({ title: "Error", description: res.error, variant: "destructive" });
+        }
+        setIsSubmitting(false);
+    };
+
+    const handleLogExpense = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        const formData = new FormData(e.currentTarget);
+        const data = {
+            branchId: id as string,
+            type: formData.get("type") as string,
+            amount: Number(formData.get("amount")),
+            date: formData.get("date") as string,
+            description: formData.get("description") as string,
+        };
+
+        const res = await createBranchExpenseAction(data as any);
+        if (res.success) {
+            toast({ title: "Success", description: "Expense logged successfully" });
+            setIsExpenseDialogOpen(false);
+            window.location.reload();
+        } else {
+            toast({ title: "Error", description: res.error, variant: "destructive" });
+        }
+        setIsSubmitting(false);
+    };
 
     if (loading) {
         return (
@@ -71,8 +153,8 @@ export default function BranchDetailPage() {
 
     const stats = [
         { name: "Total Students", value: analytics?.totalStudents || 0, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
+        { name: "Total Team", value: analytics?.totalTeachers || 0, icon: UserPlus, color: "text-purple-600", bg: "bg-purple-50" },
         { name: "Total Revenue", value: `₹${analytics?.totalRevenue || 0}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
-        { name: "Total Expenses", value: `₹${analytics?.totalExpenses || 0}`, icon: Receipt, color: "text-rose-600", bg: "bg-rose-50" },
         { name: "Net Profit", value: `₹${analytics?.netProfit || 0}`, icon: TrendingUp, color: "text-brand", bg: "bg-brand/5" },
     ];
 
@@ -168,14 +250,41 @@ export default function BranchDetailPage() {
                                 <CardTitle>Branch Team</CardTitle>
                                 <CardDescription>Manage teachers, branch head, and staff</CardDescription>
                             </div>
-                            <Button size="sm" className="bg-brand text-white gap-2">
-                                <Plus className="w-4 h-4" /> Add Member
-                            </Button>
+                            <Link href={`/admin/teachers/new?branchId=${id}`}>
+                                <Button size="sm" className="bg-brand text-white gap-2">
+                                    <Plus className="w-4 h-4" /> Add Member
+                                </Button>
+                            </Link>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-center py-10 text-muted-foreground">
-                                List of team members assigned to this branch.
-                            </div>
+                            {teachers.length === 0 ? (
+                                <div className="text-center py-10 text-muted-foreground">
+                                    No team members assigned to this branch.
+                                </div>
+                            ) : (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Name</TableHead>
+                                            <TableHead>Role</TableHead>
+                                            <TableHead>Dept.</TableHead>
+                                            <TableHead>Contact</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {teachers.map((t) => (
+                                            <TableRow key={t.id}>
+                                                <TableCell className="font-medium text-sm">{t.name}</TableCell>
+                                                <TableCell>
+                                                    <Badge variant="secondary" className="text-[10px]">{t.role || "Teacher"}</Badge>
+                                                </TableCell>
+                                                <TableCell className="text-xs">{t.department}</TableCell>
+                                                <TableCell className="text-xs">{t.contact}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            )}
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -187,14 +296,39 @@ export default function BranchDetailPage() {
                                 <CardTitle>Class Management</CardTitle>
                                 <CardDescription>Configure courses and fee structures for this branch</CardDescription>
                             </div>
-                            <Button size="sm" className="bg-brand text-white gap-2">
+                            <Button onClick={() => setIsClassDialogOpen(true)} size="sm" className="bg-brand text-white gap-2">
                                 <Plus className="w-4 h-4" /> Create Class
                             </Button>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-center py-10 text-muted-foreground">
-                                No classes created yet for this branch.
-                            </div>
+                            {classes.length === 0 ? (
+                                <div className="text-center py-10 text-muted-foreground">
+                                    No classes created yet for this branch.
+                                </div>
+                            ) : (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Class Name</TableHead>
+                                            <TableHead>Course Type</TableHead>
+                                            <TableHead>Duration</TableHead>
+                                            <TableHead>Fee Structure</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {classes.map((cls) => (
+                                            <TableRow key={cls.id}>
+                                                <TableCell className="font-medium">{cls.name}</TableCell>
+                                                <TableCell>{cls.course_type}</TableCell>
+                                                <TableCell>{cls.duration}</TableCell>
+                                                <TableCell className="text-xs">
+                                                    Adm: ₹{cls.fee_structure.admission}, Mon: ₹{cls.fee_structure.monthly}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            )}
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -206,7 +340,7 @@ export default function BranchDetailPage() {
                                 <CardTitle>Branch Students</CardTitle>
                                 <CardDescription>Manage students enrolled in this branch</CardDescription>
                             </div>
-                            <Link href="/admin/students/new">
+                            <Link href={`/admin/students/new?branchId=${id}`}>
                                 <Button size="sm" className="bg-brand text-white gap-2">
                                     <Plus className="w-4 h-4" /> Add Student
                                 </Button>
@@ -256,18 +390,137 @@ export default function BranchDetailPage() {
                                 <CardTitle>Operational Expenses</CardTitle>
                                 <CardDescription>Rent, Electricity, Marketing, etc.</CardDescription>
                             </div>
-                            <Button size="sm" className="bg-brand text-white gap-2">
+                            <Button onClick={() => setIsExpenseDialogOpen(true)} size="sm" className="bg-brand text-white gap-2">
                                 <Plus className="w-4 h-4" /> Log Expense
                             </Button>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-center py-10 text-muted-foreground">
-                                No operational expenses logged.
-                            </div>
+                            {expenses.length === 0 ? (
+                                <div className="text-center py-10 text-muted-foreground">
+                                    No operational expenses logged.
+                                </div>
+                            ) : (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Date</TableHead>
+                                            <TableHead>Type</TableHead>
+                                            <TableHead>Amount</TableHead>
+                                            <TableHead>Description</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {expenses.map((exp) => (
+                                            <TableRow key={exp.id}>
+                                                <TableCell className="text-sm font-mono">{new Date(exp.date).toLocaleDateString()}</TableCell>
+                                                <TableCell>
+                                                    <Badge variant="outline">{exp.type}</Badge>
+                                                </TableCell>
+                                                <TableCell className="text-rose-600 font-bold">₹{exp.amount}</TableCell>
+                                                <TableCell className="text-muted-foreground text-xs">{exp.description}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            )}
                         </CardContent>
                     </Card>
                 </TabsContent>
             </Tabs>
+
+            {/* Dialogs */}
+            <Dialog open={isClassDialogOpen} onOpenChange={setIsClassDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Create New Class</DialogTitle>
+                        <DialogDescription>Add a new course offering to this branch.</DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleCreateClass} className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Class Name</Label>
+                                <Input name="name" placeholder="e.g. Web Dev Batch A" required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Course Type</Label>
+                                <Input name="courseType" placeholder="e.g. Full Stack" required />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Duration</Label>
+                                <Input name="duration" placeholder="e.g. 6 Months" required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Admission Fee (₹)</Label>
+                                <Input name="admission" type="number" defaultValue="0" required />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Monthly Fee (₹)</Label>
+                                <Input name="monthly" type="number" defaultValue="0" required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Exam Fee (₹)</Label>
+                                <Input name="exam" type="number" defaultValue="0" required />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setIsClassDialogOpen(false)}>Cancel</Button>
+                            <Button type="submit" className="bg-brand" disabled={isSubmitting}>
+                                {isSubmitting ? "Creating..." : "Create Class"}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isExpenseDialogOpen} onOpenChange={setIsExpenseDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Log Operational Expense</DialogTitle>
+                        <DialogDescription>Record bills, rent, or other costs.</DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleLogExpense} className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Expense Type</Label>
+                                <Select name="type" defaultValue="Other">
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Rent">Rent</SelectItem>
+                                        <SelectItem value="Electricity">Electricity</SelectItem>
+                                        <SelectItem value="Marketing">Marketing</SelectItem>
+                                        <SelectItem value="Maintenance">Maintenance</SelectItem>
+                                        <SelectItem value="Other">Other</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Amount (₹)</Label>
+                                <Input name="amount" type="number" required />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Date</Label>
+                            <Input name="date" type="date" defaultValue={new Date().toISOString().split('T')[0]} required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Description</Label>
+                            <Input name="description" placeholder="e.g. Feb Month Rent" />
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setIsExpenseDialogOpen(false)}>Cancel</Button>
+                            <Button type="submit" className="bg-brand" disabled={isSubmitting}>
+                                {isSubmitting ? "Logging..." : "Log Expense"}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

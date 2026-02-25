@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const teacherSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
-    branch: z.string().min(1, "Branch is required"),
+    branch: z.string().optional(),
     department: z.string().min(1, "Department is required"),
     assignedClass: z.string().min(1, "Assigned class is required"),
     subject: z.string().min(1, "Subject is required"),
@@ -12,6 +12,8 @@ export const teacherSchema = z.object({
     joiningDate: z.date(),
     basicSalary: z.coerce.number().min(0, "Basic salary must be non-negative"),
     allowances: z.coerce.number().min(0, "Allowances must be non-negative"),
+    branchId: z.string().uuid("Invalid branch ID").optional(),
+    role: z.enum(["Teacher", "Branch Head", "Staff"]).default("Teacher"),
 });
 
 export type TeacherFormValues = z.infer<typeof teacherSchema>;

@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Camera, Loader2, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,10 +18,9 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { teacherSchema, TeacherFormValues } from "@/lib/schemas/teacher.schema";
 import { createTeacherAction, updateTeacherAction } from "@/lib/actions/teacher.action";
+import { getBranchesAction } from "@/lib/actions/branch.action";
 
-const BRANCHES = [
-    "Main Branch \u2013 Adarsh Nagar, Delhi"
-];
+// Fetched from database
 
 const DEPARTMENTS = [
     "Science", "Commerce", "Arts", "Mathematics",
@@ -46,8 +45,11 @@ export function TeacherForm({ mode, teacherId, defaultValues }: TeacherFormProps
     const router = useRouter();
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const [photoBase64, setPhotoBase64] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [branches, setBranches] = useState<any[]>([]);
+    const searchParams = useSearchParams();
+    const queryBranchId = searchParams.get("branchId");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const {
@@ -61,7 +63,6 @@ export function TeacherForm({ mode, teacherId, defaultValues }: TeacherFormProps
         resolver: zodResolver(teacherSchema),
         defaultValues: {
             name: defaultValues?.name || "",
-            branch: defaultValues?.branch || "Main Branch \u2013 Adarsh Nagar, Delhi",
             department: defaultValues?.department || "",
             assignedClass: defaultValues?.assignedClass || "",
             subject: defaultValues?.subject || "",
@@ -71,7 +72,15 @@ export function TeacherForm({ mode, teacherId, defaultValues }: TeacherFormProps
             joiningDate: defaultValues?.joiningDate || new Date(),
             basicSalary: defaultValues?.basicSalary || 0,
             allowances: defaultValues?.allowances || 0,
+            branchId: defaultValues?.branchId || queryBranchId || "",
+            role: (defaultValues?.role as any) || "Teacher",
         },
+    });
+
+    useState(() => {
+        getBranchesAction().then(res => {
+            if (res.success) setBranches(res.data);
+        });
     });
 
     const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -213,19 +222,23 @@ export function TeacherForm({ mode, teacherId, defaultValues }: TeacherFormProps
                     <div>
                         <Label>Branch *</Label>
                         <Select
-                            defaultValue={defaultValues?.branch || "Main Branch \u2013 Adarsh Nagar, Delhi"}
-                            onValueChange={(v) => setValue("branch", v, { shouldValidate: true })}
+                            defaultValue={watch("branchId") || queryBranchId || ""}
+                            onValueChange={(v) => {
+                                setValue("branchId", v, { shouldValidate: true });
+                                const branchName = branches.find(b => b.id === v)?.name;
+                                if (branchName) setValue("branch", branchName);
+                            }}
                         >
                             <SelectTrigger className="mt-1">
                                 <SelectValue placeholder="Select branch" />
                             </SelectTrigger>
                             <SelectContent>
-                                {BRANCHES.map((b) => (
-                                    <SelectItem key={b} value={b}>{b}</SelectItem>
+                                {branches.map((b) => (
+                                    <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
-                        {errors.branch && <p className="text-xs text-red-500 mt-1">{errors.branch.message}</p>}
+                        {errors.branchId && <p className="text-xs text-red-500 mt-1">{errors.branchId.message}</p>}
                     </div>
 
                     <div>
