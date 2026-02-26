@@ -45,11 +45,18 @@ export default async function AdminJobsPage() {
                     <h1 className="text-2xl font-bold tracking-tight">Job Openings</h1>
                     <p className="text-muted-foreground">Manage job postings and their visibility.</p>
                 </div>
-                <Link href="/admin/jobs/new">
-                    <Button className="bg-brand hover:bg-brand/90 text-white gap-2">
-                        <Plus className="w-4 h-4" /> Create New Job
-                    </Button>
-                </Link>
+                <div className="flex flex-wrap gap-3">
+                    <Link href="/admin/jobs/applications">
+                        <Button variant="outline" className="border-border/60 hover:bg-accent/50 gap-2">
+                            <Plus className="w-4 h-4" /> View Applications
+                        </Button>
+                    </Link>
+                    <Link href="/admin/jobs/new">
+                        <Button className="bg-brand hover:bg-brand/90 text-white gap-2">
+                            <Plus className="w-4 h-4" /> Create New Job
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
             <div className="flex items-center gap-4 bg-accent/30 p-4 rounded-lg border border-border/50">

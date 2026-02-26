@@ -1,6 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+import { sendWhatsAppNotification } from "@/lib/services/whatsapp";
 
 export async function submitApplicationAction(
     formData: {
@@ -65,5 +67,51 @@ export async function submitApplicationAction(
         return { success: false, error: "Failed to save your application. Please try again." };
     }
 
+    return { success: true };
+}
+
+export async function getJobApplicationsAction() {
+    const supabase = createClient();
+    const { data, error } = await supabase
+        .from("job_applications")
+        .select("*")
+        .order("applied_at", { ascending: false });
+
+    if (error) {
+        console.error("Error fetching applications:", error);
+        return [];
+    }
+    return data;
+}
+
+export async function updateApplicationStatusAction(
+    id: string,
+    status: string,
+    message?: string
+) {
+    const supabase = createClient();
+
+    // 1. Update status
+    const { data: application, error: updateError } = await supabase
+        .from("job_applications")
+        .update({ status })
+        .eq("id", id)
+        .select()
+        .single();
+
+    if (updateError) {
+        console.error("Error updating application status:", updateError);
+        return { success: false, error: updateError.message };
+    }
+
+    // 2. Send WhatsApp notification if requested
+    if (message && application.phone) {
+        await sendWhatsAppNotification({
+            phone: application.phone,
+            message: message
+        });
+    }
+
+    revalidatePath("/admin/jobs/applications");
     return { success: true };
 }
