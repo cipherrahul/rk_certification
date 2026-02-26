@@ -1,15 +1,51 @@
+"use client";
+
 import Link from "next/link";
-import { Plus, FileText, Download, Eye } from "lucide-react";
+import { Plus, FileText, Download, Trash2, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getOfferLettersAction } from "@/lib/actions/offer-letter.action";
+import { getOfferLettersAction, deleteOfferLetterAction } from "@/lib/actions/offer-letter.action";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
-export default async function OfferLetterListPage() {
-    const letters = await getOfferLettersAction();
+export default function OfferLetterListPage() {
+    const [letters, setLetters] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isDeleting, setIsDeleting] = useState<string | null>(null);
+    const { toast } = useToast();
+    const router = useRouter();
+
+    const fetchLetters = async () => {
+        const data = await getOfferLettersAction();
+        setLetters(data);
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        fetchLetters();
+    }, []);
+
+    const handleDelete = async (id: string, name: string) => {
+        if (!confirm(`Are you sure you want to delete the offer letter for ${name}?`)) return;
+
+        setIsDeleting(id);
+        try {
+            const res = await deleteOfferLetterAction(id);
+            if (res.success) {
+                toast({ title: "Deleted", description: "Offer letter record removed." });
+                fetchLetters();
+            } else {
+                toast({ variant: "destructive", title: "Failed", description: res.error });
+            }
+        } finally {
+            setIsDeleting(null);
+        }
+    };
 
     return (
         <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
@@ -77,7 +113,12 @@ export default async function OfferLetterListPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
-                    {letters.length === 0 ? (
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center py-16 gap-3">
+                            <Loader2 className="w-8 h-8 text-brand animate-spin" />
+                            <p className="text-sm text-muted-foreground">Loading offer letters...</p>
+                        </div>
+                    ) : letters.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
                             <FileText className="w-12 h-12 text-muted-foreground/40" />
                             <p className="text-sm font-medium text-muted-foreground">No offer letters generated yet.</p>
@@ -111,25 +152,45 @@ export default async function OfferLetterListPage() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-sm font-medium text-foreground">
-                                            ₹{Number(letter.gross_salary).toLocaleString("en-IN")}
+                                            INR {Number(letter.gross_salary).toLocaleString("en-IN")}
                                         </TableCell>
                                         <TableCell className="text-sm text-muted-foreground">
                                             {new Date(letter.joining_date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant="outline" className="bg-brand/10 text-brand border-brand/20 text-xs font-medium">
-                                                {letter.status}
+                                            <Badge
+                                                variant="outline"
+                                                className={`
+                                                    text-xs font-medium px-2 py-0.5
+                                                    ${letter.status === "generated" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                                                        letter.status === "failed" ? "bg-red-50 text-red-700 border-red-200" :
+                                                            "bg-amber-50 text-amber-700 border-amber-200"}
+                                                `}
+                                            >
+                                                {letter.status === "generating" && <Loader2 className="w-2.5 h-2.5 mr-1 animate-spin" />}
+                                                {letter.status === "failed" && <AlertCircle className="w-2.5 h-2.5 mr-1" />}
+                                                {letter.status.toUpperCase()}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right pr-6">
                                             <div className="flex justify-end gap-1">
-                                                {letter.pdf_url && (
+                                                {letter.status === "generated" && letter.pdf_url && (
                                                     <a href={letter.pdf_url} target="_blank" rel="noopener noreferrer">
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-brand hover:bg-brand/10">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-600 hover:bg-indigo-50" title="Download">
                                                             <Download className="w-3.5 h-3.5" />
                                                         </Button>
                                                     </a>
                                                 )}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50"
+                                                    onClick={() => handleDelete(letter.id, letter.full_name)}
+                                                    disabled={isDeleting === letter.id}
+                                                    title="Delete"
+                                                >
+                                                    {isDeleting === letter.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                                                </Button>
                                             </div>
                                         </TableCell>
                                     </TableRow>

@@ -467,18 +467,18 @@ export default async function AdminDashboardPage() {
                 </Card>
 
                 {/* Quick Growth Insight */}
-                <Card className="shadow-sm border-indigo-100 bg-indigo-50/30 overflow-hidden relative">
-                    <div className="absolute -right-4 -bottom-4 opacity-5">
+                <Card className="shadow-sm border-indigo-100 dark:border-indigo-900 bg-indigo-50/30 dark:bg-slate-900/50 overflow-hidden relative">
+                    <div className="absolute -right-4 -bottom-4 opacity-5 dark:opacity-10">
                         <TrendingUp className="w-32 h-32 text-indigo-600" />
                     </div>
                     <CardHeader>
-                        <CardTitle className="text-indigo-900 text-lg flex items-center gap-2">
+                        <CardTitle className="text-indigo-900 dark:text-indigo-300 text-lg flex items-center gap-2">
                             Growth Strategy
                         </CardTitle>
-                        <CardDescription className="text-indigo-700/70">Conversion Optimization</CardDescription>
+                        <CardDescription className="text-indigo-700/70 dark:text-indigo-400">Conversion Optimization</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <p className="text-sm text-indigo-900/80 leading-relaxed">
+                        <p className="text-sm text-indigo-900/80 dark:text-indigo-200 leading-relaxed">
                             Track website leads to boost enrollment. High conversion happens within <strong>24 hours</strong> of inquiry.
                         </p>
                         <Link href="/admin/mis">

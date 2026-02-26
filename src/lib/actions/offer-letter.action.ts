@@ -46,11 +46,17 @@ export async function createOfferLetterAction(data: OfferLetterFormValues) {
     }
 
     // 3. Generate PDF
-    const pdfUrl = await generateOfferLetterPDF(parsed.data, record.id);
+    let pdfUrl: string | null = null;
+    try {
+        pdfUrl = await generateOfferLetterPDF(parsed.data, record.id);
+    } catch (err: any) {
+        console.error("PDF generation crash:", err);
+        await supabase.from("offer_letters").update({ status: "failed" }).eq("id", record.id);
+        return { success: false, error: `PDF generation failed: ${err.message}` };
+    }
 
     if (!pdfUrl) {
-        // Clean up the record if PDF generation failed
-        await supabase.from("offer_letters").delete().eq("id", record.id);
+        await supabase.from("offer_letters").update({ status: "failed" }).eq("id", record.id);
         return { success: false, error: "PDF generation failed. Please try again." };
     }
 
@@ -75,4 +81,29 @@ export async function getOfferLettersAction() {
         return [];
     }
     return data ?? [];
+}
+
+export async function deleteOfferLetterAction(id: string) {
+    const supabase = createClient();
+
+    // 1. Get the record to find the PDF URL if it exists
+    const { data: record } = await supabase.from("offer_letters").select("pdf_url").eq("id", id).single();
+
+    // 2. Delete from storage if PDF exists
+    if (record?.pdf_url) {
+        try {
+            const url = new URL(record.pdf_url);
+            const pathParts = url.pathname.split("/");
+            const path = pathParts.slice(pathParts.indexOf("offer-letters")).join("/");
+            await supabase.storage.from("offer-letters").remove([path.replace("offer-letters/", "")]);
+        } catch (e) {
+            console.error("Failed to delete storage file:", e);
+        }
+    }
+
+    // 3. Delete from database
+    const { error } = await supabase.from("offer_letters").delete().eq("id", id);
+
+    if (error) return { success: false, error: error.message };
+    return { success: true };
 }

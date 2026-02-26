@@ -22,7 +22,7 @@ function formatDate(dateStr: string): string {
 }
 
 function formatCurrency(amount: number): string {
-    return `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+    return `INR ${amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
 }
 
 export async function generateOfferLetterPDF(data: OfferLetterFormValues, offerId: string): Promise<string | null> {
@@ -190,8 +190,8 @@ export async function generateOfferLetterPDF(data: OfferLetterFormValues, offerI
     // Table header
     p2.page.drawRectangle({ x: 50, y: y2 - 5, width: p2.width - 100, height: 22, color: GREEN });
     p2.page.drawText("Salary Component", { x: 60, y: y2 + 4, size: 10, font: boldFont, color: WHITE });
-    p2.page.drawText("Monthly (₹)", { x: p2.width - 220, y: y2 + 4, size: 10, font: boldFont, color: WHITE });
-    p2.page.drawText("Annual (₹)", { x: p2.width - 120, y: y2 + 4, size: 10, font: boldFont, color: WHITE });
+    p2.page.drawText("Monthly (INR)", { x: p2.width - 220, y: y2 + 4, size: 10, font: boldFont, color: WHITE });
+    p2.page.drawText("Annual (INR)", { x: p2.width - 120, y: y2 + 4, size: 10, font: boldFont, color: WHITE });
     y2 -= 22;
 
     const salaryRows: [string, number][] = [
