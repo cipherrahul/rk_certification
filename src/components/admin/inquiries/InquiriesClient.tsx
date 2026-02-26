@@ -16,7 +16,8 @@ import {
     User,
     GraduationCap,
     ExternalLink,
-    Loader2
+    Loader2,
+    FileText
 } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
@@ -36,6 +37,14 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +68,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
 
 export function InquiriesClient({ initialEnquiries }: InquiriesClientProps) {
     const [searchTerm, setSearchTerm] = useState("");
+    const [selectedEnquiry, setSelectedEnquiry] = useState<any>(null);
     const [isUpdating, setIsUpdating] = useState<string | null>(null);
     const { toast } = useToast();
     const router = useRouter();
@@ -111,15 +121,15 @@ export function InquiriesClient({ initialEnquiries }: InquiriesClientProps) {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900">Admissions CRM</h1>
-                    <p className="text-muted-foreground mt-1 text-sm">Track and manage student enquiries from the website.</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-100 leading-tight">Admissions CRM</h1>
+                    <p className="text-slate-400 mt-1 text-sm">Track and manage student enquiries from the website.</p>
                 </div>
                 <div className="flex items-center gap-3 w-full md:w-auto">
                     <div className="relative flex-1 md:w-80">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <Input
                             placeholder="Search by student, parent or mobile..."
-                            className="pl-9 bg-white border-slate-200"
+                            className="pl-9 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -183,14 +193,86 @@ export function InquiriesClient({ initialEnquiries }: InquiriesClientProps) {
                                                 {config.label}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell className="text-right pr-6">
+                                        <TableCell className="text-right pr-6 flex items-center justify-end gap-2">
+                                            <Dialog>
+                                                <DialogTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 gap-2"
+                                                        onClick={() => setSelectedEnquiry(enquiry)}
+                                                    >
+                                                        <FileText className="w-4 h-4" /> View Details
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent className="max-w-lg">
+                                                    <DialogHeader>
+                                                        <DialogTitle className="text-xl">Enquiry Details</DialogTitle>
+                                                        <DialogDescription>
+                                                            Full enquiry information from {enquiry.student_name}.
+                                                        </DialogDescription>
+                                                    </DialogHeader>
+
+                                                    <div className="grid grid-cols-2 gap-4 py-4">
+                                                        <div>
+                                                            <label className="text-[10px] uppercase font-bold text-slate-400">Student Name</label>
+                                                            <p className="font-semibold text-slate-900">{enquiry.student_name}</p>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[10px] uppercase font-bold text-slate-400">Parent Name</label>
+                                                            <p className="font-semibold text-slate-900">{enquiry.parent_name}</p>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[10px] uppercase font-bold text-slate-400">Course & Class</label>
+                                                            <p className="text-sm font-medium text-slate-700">{enquiry.course_interested}</p>
+                                                            <p className="text-xs text-indigo-600 font-bold uppercase">{enquiry.class}</p>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[10px] uppercase font-bold text-slate-400">Contact Number</label>
+                                                            <p className="text-sm font-medium">+91 {enquiry.mobile_number}</p>
+                                                            <p className="text-xs text-slate-500">{enquiry.email}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-4">
+                                                        <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Message / Requirements</label>
+                                                        <p className="text-sm text-slate-700 leading-relaxed italic whitespace-pre-wrap">
+                                                            "{enquiry.message || "No message provided."}"
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between pt-4 border-t gap-3">
+                                                        <div className="flex gap-2">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                                                                onClick={() => openWhatsApp(enquiry.mobile_number, enquiry.student_name)}
+                                                            >
+                                                                <MessageSquare className="w-4 h-4 mr-2" /> WhatsApp
+                                                            </Button>
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="text-rose-600 hover:bg-rose-50"
+                                                                onClick={() => handleDelete(enquiry.id)}
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </DialogContent>
+                                            </Dialog>
+
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isUpdating === enquiry.id}>
                                                         {isUpdating === enquiry.id ? (
                                                             <Loader2 className="h-4 w-4 animate-spin" />
                                                         ) : (
-                                                            <MoreHorizontal className="h-4 w-4" />
+                                                            <MoreHorizontal className="h-4 w-4 text-slate-600" />
                                                         )}
                                                     </Button>
                                                 </DropdownMenuTrigger>
