@@ -64,5 +64,15 @@ BEGIN
     END IF;
 END $$;
 
--- 6. Add to Realtime Publication
-ALTER PUBLICATION supabase_realtime ADD TABLE public.expense_categories;
+-- 6. Add to Realtime Publication safely
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' 
+        AND schemaname = 'public' 
+        AND tablename = 'expense_categories'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.expense_categories;
+    END IF;
+END $$;

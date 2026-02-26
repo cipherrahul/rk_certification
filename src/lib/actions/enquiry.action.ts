@@ -23,6 +23,7 @@ export async function submitEnquiryAction(data: EnquiryFormValues) {
         email: parsed.data.email,
         message: parsed.data.message,
         status: "new",
+        source: "Website",
     });
 
     if (error) {
