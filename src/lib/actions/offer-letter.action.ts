@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { offerLetterSchema, type OfferLetterFormValues } from "@/lib/schemas/offer-letter.schema";
 import { generateOfferLetterPDF } from "@/lib/pdf/offer-letter-pdf";
+import { revalidatePath } from "next/cache";
 
 export async function createOfferLetterAction(data: OfferLetterFormValues) {
     // 1. Server-side validation
@@ -61,11 +62,23 @@ export async function createOfferLetterAction(data: OfferLetterFormValues) {
     }
 
     // 4. Update record with pdf_url and status
-    await supabase
+    console.log("PDF generated successfully, updating database record:", record.id);
+    const { error: updateError } = await supabase
         .from("offer_letters")
-        .update({ pdf_url: pdfUrl, status: "generated" })
+        .update({
+            pdf_url: pdfUrl,
+            status: "generated",
+            updated_at: new Date().toISOString()
+        })
         .eq("id", record.id);
 
+    if (updateError) {
+        console.error("Final update error:", updateError);
+        return { success: false, error: `Failed to update status: ${updateError.message}` };
+    }
+
+    console.log("Offer letter generation complete for ID:", record.id);
+    revalidatePath("/admin/offer-letter");
     return { success: true, pdfUrl, id: record.id };
 }
 
@@ -105,5 +118,7 @@ export async function deleteOfferLetterAction(id: string) {
     const { error } = await supabase.from("offer_letters").delete().eq("id", id);
 
     if (error) return { success: false, error: error.message };
+
+    revalidatePath("/admin/offer-letter");
     return { success: true };
 }

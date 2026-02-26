@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Download, CheckCircle2, FileText } from "lucide-react";
 
@@ -45,8 +45,24 @@ export function OfferLetterForm() {
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
     const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<OfferLetterFormValues>({
-        resolver: zodResolver(offerLetterSchema),
-        defaultValues: { hra: 0, ta: 0, otherAllowance: 0 },
+        resolver: zodResolver(offerLetterSchema) as any,
+        defaultValues: {
+            fullName: "",
+            fatherName: "",
+            address: "",
+            employeeEmail: "",
+            position: "",
+            department: "",
+            workLocation: "",
+            employmentType: "Full-Time",
+            joiningDate: "",
+            probationPeriod: "",
+            workingHours: "",
+            basicSalary: 0,
+            hra: 0,
+            ta: 0,
+            otherAllowance: 0
+        },
     });
 
     const basic = watch("basicSalary") || 0;
@@ -55,7 +71,7 @@ export function OfferLetterForm() {
     const other = watch("otherAllowance") || 0;
     const gross = Number(basic) + Number(hra) + Number(ta) + Number(other);
 
-    async function onSubmit(data: OfferLetterFormValues) {
+    const onSubmit: SubmitHandler<OfferLetterFormValues> = async (data) => {
         const result = await createOfferLetterAction(data);
         if (result.success && result.pdfUrl) {
             setPdfUrl(result.pdfUrl);
@@ -63,10 +79,10 @@ export function OfferLetterForm() {
         } else {
             toast({ title: "Generation failed", description: result.error, variant: "destructive" });
         }
-    }
+    };
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
             {/* Success Banner */}
             {pdfUrl && (
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-xl border border-brand/30 bg-brand/10">
@@ -183,21 +199,21 @@ export function OfferLetterForm() {
             <Card className="border-border/60 bg-card shadow-sm">
                 <CardHeader className="pb-3">
                     <CardTitle className="text-base">
-                        <SectionHeader title="Salary Structure" description="Monthly amounts in INR (₹)" />
+                        <SectionHeader title="Salary Structure" description="Monthly amounts in INR" />
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <Field label="Basic Salary (₹)" error={errors.basicSalary?.message} required>
+                        <Field label="Basic Salary (INR)" error={errors.basicSalary?.message} required>
                             <Input type="number" min={0} placeholder="e.g. 25000" className="bg-background border-border/60 focus-visible:ring-brand" {...register("basicSalary")} />
                         </Field>
-                        <Field label="HRA (₹)" error={errors.hra?.message}>
+                        <Field label="HRA (INR)" error={errors.hra?.message}>
                             <Input type="number" min={0} placeholder="e.g. 8000" className="bg-background border-border/60 focus-visible:ring-brand" {...register("hra")} />
                         </Field>
-                        <Field label="Travel Allowance – TA (₹)" error={errors.ta?.message}>
+                        <Field label="Travel Allowance – TA (INR)" error={errors.ta?.message}>
                             <Input type="number" min={0} placeholder="e.g. 2000" className="bg-background border-border/60 focus-visible:ring-brand" {...register("ta")} />
                         </Field>
-                        <Field label="Other Allowances (₹)" error={errors.otherAllowance?.message}>
+                        <Field label="Other Allowances (INR)" error={errors.otherAllowance?.message}>
                             <Input type="number" min={0} placeholder="e.g. 1500" className="bg-background border-border/60 focus-visible:ring-brand" {...register("otherAllowance")} />
                         </Field>
                     </div>
@@ -206,10 +222,10 @@ export function OfferLetterForm() {
                     <div className="flex items-center justify-between rounded-lg border border-brand/30 bg-brand/10 px-5 py-3">
                         <span className="text-sm font-semibold text-foreground">Gross Salary (CTC) / Month</span>
                         <span className="text-lg font-bold text-brand">
-                            ₹{gross.toLocaleString("en-IN")}
+                            INR {gross.toLocaleString("en-IN")}
                         </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">Annual CTC: ₹{(gross * 12).toLocaleString("en-IN")}</p>
+                    <p className="text-xs text-muted-foreground">Annual CTC: INR {(gross * 12).toLocaleString("en-IN")}</p>
                 </CardContent>
             </Card>
 
