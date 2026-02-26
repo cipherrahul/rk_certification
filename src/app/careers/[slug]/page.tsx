@@ -122,7 +122,7 @@ export default async function JobDetailPage({ params }: { params: { slug: string
                             </div>
 
                             <div className="hidden lg:flex justify-end pr-2">
-                                <Button variant="outline" className="rounded-xl border-white/10 hover:bg-white/5 text-white gap-2 h-10 px-5 text-sm">
+                                <Button variant="ghost" className="rounded-xl border-white/10 hover:bg-white/5 text-white gap-2 h-10 px-5 text-sm">
                                     <Share2 className="w-4 h-4" /> Share Role
                                 </Button>
                             </div>
