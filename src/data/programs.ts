@@ -1,18 +1,4 @@
-import {
-    BookOpen,
-    GraduationCap,
-    Lightbulb,
-    Scale,
-    Star,
-    TrendingUp,
-    Zap,
-    CheckCircle2,
-    Atom,
-    LucideIcon,
-    Globe,
-    Laptop,
-    ShieldCheck
-} from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 
 export type ProgramCategory = 'Academic' | 'Competitive' | 'Entrance' | 'Professional';
 
@@ -26,6 +12,8 @@ export interface CurriculumModule {
     topics: string[];
 }
 
+export type ProgramIconName = 'Lightbulb' | 'BookOpen' | 'GraduationCap' | 'Zap' | 'Atom' | 'Star' | 'CheckCircle2' | 'TrendingUp' | 'Globe' | 'Laptop';
+
 export interface Program {
     slug: string;
     title: string;
@@ -36,7 +24,7 @@ export interface Program {
     mode: 'Offline' | 'Hybrid' | 'Online';
     description: string;
     detailedDescription: string;
-    icon: LucideIcon;
+    icon: ProgramIconName;
     highlight: string;
     curriculum: string[];
     fullCurriculum: CurriculumModule[];
@@ -57,7 +45,7 @@ export const PROGRAMS: Program[] = [
         mode: 'Offline',
         description: 'Nurturing young minds with a strong focus on conceptual clarity and activity-based learning.',
         detailedDescription: 'Our Primary Foundation program is meticulously designed for students in classes 1 to 8. We believe that these formative years are critical for developing a lifelong love for learning. Our approach moves away from rote memorization, focusing instead on "Learning by Doing." Through interactive sessions, digital aids, and regular practical applications, we ensure that students build an unshakable foundation in core subjects while developing critical thinking and logical reasoning skills.',
-        icon: Lightbulb,
+        icon: 'Lightbulb',
         highlight: 'Strong Foundation',
         curriculum: ['Mental Math foundation', 'Grammar and Fluency', 'Basic Science concepts', 'Interactive EVS'],
         fullCurriculum: [
@@ -94,7 +82,7 @@ export const PROGRAMS: Program[] = [
         mode: 'Offline',
         description: 'Expert-led preparation focusing on Board Exams and deep subject-specific training.',
         detailedDescription: 'Classes 9 and 10 are the gateway to clinical academic success. Our Secondary Excellence program offers a rigorous, board-aligned curriculum that helps students navigate the complexities of high school Science and Mathematics. We emphasize conceptual depth, rigorous testing, and exam-taking strategies that have consistently produced top-rankers in state and national boards.',
-        icon: BookOpen,
+        icon: 'BookOpen',
         highlight: 'Board Focused',
         curriculum: ['NCERT Depth coverage', 'Sample paper workshops', 'Formula & Concept mapping', 'Regular Mock Tests'],
         fullCurriculum: [
@@ -130,7 +118,7 @@ export const PROGRAMS: Program[] = [
         mode: 'Hybrid',
         description: 'Integrated approach for Board excellence and preliminary entrance exam preparation.',
         detailedDescription: 'Class 11 & 12 are decisive years. Our program combines Board preparation with entrance exam orientation, helping students manage their school curriculum while building a strong base for competitive exams like JEE, NEET, or CUET. We offer stream-wise specialized guidance with a focus on deep conceptual understanding.',
-        icon: GraduationCap,
+        icon: 'GraduationCap',
         highlight: 'Integrated Prep',
         curriculum: ['Stream-wise specialization', 'Advanced concept training', 'Board-integrated tutorials', 'Career counseling'],
         fullCurriculum: [
@@ -165,7 +153,7 @@ export const PROGRAMS: Program[] = [
         mode: 'Offline',
         description: 'The ultimate rank-improvement strategy for JEE Main & Advanced with India\'s best mentors.',
         detailedDescription: 'Cracking JEE requires more than just intelligence—it needs strategy, discipline, and the right guidance. Our JEE Ultimate program is led by a team of IITians and senior academicians. We provide a competitive ecosystem, advanced problem-solving techniques, and a multi-layered testing system that prepares students for the toughest engineering entrance exam in the world.',
-        icon: Zap,
+        icon: 'Zap',
         highlight: 'Rank Focused',
         curriculum: ['Concept to Advanced application', 'Daily Practice Problems (DPP)', 'All India Test Series (AITS)', 'Previous Year analytics'],
         fullCurriculum: [
@@ -201,7 +189,7 @@ export const PROGRAMS: Program[] = [
         mode: 'Offline',
         description: 'Rigorous medical entrance coaching with heavy emphasis on NCERT and critical thinking.',
         detailedDescription: 'Excellence in NEET requires an absolute mastery over NCERT. Our NEET Foundation program focuses on diagram-based learning, mnemonics for memorizing complex Biological terms, and extensive practice on assertion-reasoning type questions. We ensure students are not just learning, but retaining information for high-speed recall during the exam.',
-        icon: Atom,
+        icon: 'Atom',
         highlight: 'NCERT Centric',
         curriculum: ['Exhaustive NCERT drill', 'Diagrammatic memory techniques', 'Mock exam simulations', 'Physical & Organic weightage'],
         fullCurriculum: [
@@ -236,7 +224,7 @@ export const PROGRAMS: Program[] = [
         mode: 'Online',
         description: 'Sharpening logical and analytical skills to excel in National and International Olympiads.',
         detailedDescription: 'Olympiads are about logical flexibility and deeper application of simple concepts. This program trains students to think outside the box and compete at the national and international levels. We focus on building an analytical mindset that helps students solve problems they’ve never seen before.',
-        icon: Star,
+        icon: 'Star',
         highlight: 'Gold Medal Focus',
         curriculum: ['SOF/Silverzone syllabus', 'Logical reasoning drills', 'Past Olympiad papers', 'Competitive mock exams'],
         fullCurriculum: [
@@ -271,7 +259,7 @@ export const PROGRAMS: Program[] = [
         mode: 'Hybrid',
         description: 'Fast-track your admission to top Central Universities with our expert CUET module.',
         detailedDescription: 'CUET is the single-window entry to top universities like DU, JNU, and BHU. Our module ensures you score 100 percentile in your domain subjects while mastering the General Test and Language segments. We provide a structured roadmap that balances board exams and CUET prep.',
-        icon: CheckCircle2,
+        icon: 'CheckCircle2',
         highlight: 'Uni Admission',
         curriculum: ['Domain specialization', 'Quantitative aptitude', 'General awareness', 'Reading comprehension'],
         fullCurriculum: [
@@ -306,7 +294,7 @@ export const PROGRAMS: Program[] = [
         mode: 'Hybrid',
         description: 'Comprehensive coaching for SSC, Banking, and State Exams focusing on speed and accuracy.',
         detailedDescription: 'For those looking for a secure career in the government sector, we offer specialized coaching for SSC (CGL, CHSL), Banking (IBPS, SBI PO), and various State government exams. Our methodology focus on mental math, logical shortcuts, and a massive repository of practice questions.',
-        icon: TrendingUp,
+        icon: 'TrendingUp',
         highlight: 'Career Launch',
         curriculum: ['Math short-tricks', 'Logical reasoning puzzles', 'Business English', 'General Studies modules'],
         fullCurriculum: [
@@ -341,7 +329,7 @@ export const PROGRAMS: Program[] = [
         mode: 'Hybrid',
         description: 'Master modern web development from scratch with project-based learning and placement support.',
         detailedDescription: 'The tech industry values skills over degrees. Our Full Stack Development program is a hands-on bootcamp designed to take you from hello-world to building complex production-grade applications. You will learn the PERN stack (PostgreSQL, Express, React, Node) and master modern tools like Git, Docker, and AWS, all while being mentored by senior software engineers.',
-        icon: Globe,
+        icon: 'Globe',
         highlight: 'Job Ready',
         curriculum: ['HTML/CSS/JS Mastery', 'React & Next.js Frameworks', 'REST & GraphQL APIs', 'Deployment & Cloud basics'],
         fullCurriculum: [
@@ -377,7 +365,7 @@ export const PROGRAMS: Program[] = [
         mode: 'Online',
         description: 'Become a data professional by mastering AI, Machine Learning, and Big Data analytics.',
         detailedDescription: 'Data is the new oil. This program takes you deep into the world of Big Data and AI, ensuring you can generate insights and build predictive models that drive business decisions. From Python fundamentals to building Large Language Models, this course covers the entire spectrum of modern data science.',
-        icon: TrendingUp,
+        icon: 'TrendingUp',
         highlight: 'High Growth',
         curriculum: ['Python for Data Science', 'Statistical Modeling', 'ML Algorithms implementation', 'Neural Networks & NLP'],
         fullCurriculum: [
@@ -412,7 +400,7 @@ export const PROGRAMS: Program[] = [
         mode: 'Offline',
         description: 'Comprehensive computer training covering office automation, accounting, and graphic design.',
         detailedDescription: 'The ADCA program is our most popular diploma for office and clerical career paths. It provides a 360-degree training on software that keeps modern businesses running. From complex Excel reporting to Tally Prime with GST, you will become the "go-to" computer expert for any organization.',
-        icon: Laptop,
+        icon: 'Laptop',
         highlight: 'Career Essential',
         curriculum: ['Advanced Excel & Word', 'Tally with GST', 'Basic Graphic Design', 'Cyber security basics'],
         fullCurriculum: [

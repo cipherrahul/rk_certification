@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ChevronDown,
@@ -17,6 +18,8 @@ import {
 import { Program } from '@/data/programs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { generateBrochure } from '@/lib/pdf/brochure-generator';
+import ProgramIcon from './ProgramIcon';
 
 export default function ProgramDetailClient({ program }: { program: Program }) {
     const [activeModule, setActiveModule] = useState<number | null>(0);
@@ -37,8 +40,11 @@ export default function ProgramDetailClient({ program }: { program: Program }) {
                             <Star className="h-4 w-4 fill-current" />
                             {program.highlight}
                         </div>
-                        <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">
-                            {program.title} <span className="text-blue-600">Level.</span>
+                        <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight flex items-center gap-4">
+                            <div className="p-3 rounded-2xl bg-slate-900 border border-white/5">
+                                <ProgramIcon name={program.icon} className="h-8 w-8 md:h-10 md:w-10 text-blue-500" />
+                            </div>
+                            <span>{program.title} <span className="text-blue-600">Level.</span></span>
                         </h1>
                         <p className="text-xl text-slate-400 mb-10 leading-relaxed font-light">
                             {program.detailedDescription}
@@ -63,18 +69,26 @@ export default function ProgramDetailClient({ program }: { program: Program }) {
                             <Button
                                 size="lg"
                                 className="rounded-full h-14 px-8 bg-blue-600 hover:bg-blue-700 font-bold"
-                                onClick={() => {
+                                onClick={async () => {
                                     setIsGenerating(true);
-                                    setTimeout(() => setIsGenerating(false), 2000);
+                                    try {
+                                        await generateBrochure(program);
+                                    } catch (error) {
+                                        console.error("Brochure generation failed:", error);
+                                    } finally {
+                                        setIsGenerating(false);
+                                    }
                                 }}
                                 disabled={isGenerating}
                             >
                                 {isGenerating ? "Preparing..." : "Download Brochure"}
                                 <Download className="ml-2 h-5 w-5" />
                             </Button>
-                            <Button size="lg" variant="outline" className="rounded-full h-14 px-8 border-2 font-bold">
-                                Contact Admission
-                            </Button>
+                            <Link href="/contact">
+                                <Button size="lg" className="rounded-full h-14 px-8 bg-indigo-600 hover:bg-indigo-700 text-white border-0 font-extrabold shadow-xl transition-all hover:scale-105">
+                                    Contact Admission
+                                </Button>
+                            </Link>
                         </div>
                     </motion.div>
                 </div>

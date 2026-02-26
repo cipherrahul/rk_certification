@@ -13,6 +13,7 @@ import {
     Sparkles
 } from 'lucide-react';
 import { PROGRAMS, ProgramCategory } from '@/data/programs';
+import ProgramIcon from '@/components/programs/ProgramIcon';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -120,7 +121,7 @@ export default function ProgramsPage() {
                                                 {program.highlight}
                                             </div>
                                             <div className="mb-4 p-3 rounded-2xl bg-slate-900 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 w-fit">
-                                                <program.icon className="h-6 w-6 text-blue-500" />
+                                                <ProgramIcon name={program.icon} className="h-6 w-6 text-blue-500" />
                                             </div>
                                             <CardTitle className="text-lg font-black group-hover:text-blue-400 transition-colors text-white">{program.title}</CardTitle>
                                         </CardHeader>
