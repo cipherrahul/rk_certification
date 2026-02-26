@@ -41,14 +41,15 @@ export default function Footer() {
                         </p>
                         <div className="flex gap-4">
                             {[
-                                { icon: Facebook, href: "#" },
-                                { icon: Twitter, href: "#" },
-                                { icon: Instagram, href: "#" },
-                                { icon: Linkedin, href: "#" }
+                                { icon: Facebook, href: "#", label: "Facebook" },
+                                { icon: Twitter, href: "#", label: "Twitter" },
+                                { icon: Instagram, href: "#", label: "Instagram" },
+                                { icon: Linkedin, href: "#", label: "LinkedIn" }
                             ].map((social, i) => (
                                 <motion.a
                                     key={i}
                                     href={social.href}
+                                    aria-label={`Follow us on ${social.label}`}
                                     whileHover={{ y: -4, backgroundColor: "rgba(255,255,255,0.1)" }}
                                     className="p-3 rounded-full bg-white/5 border border-white/10 text-white transition-colors"
                                 >
@@ -99,9 +100,10 @@ export default function Footer() {
                                 <input
                                     type="email"
                                     placeholder="your@email.com"
+                                    aria-label="Email for newsletter"
                                     className="bg-black/20 border border-white/10 rounded-xl px-4 py-2 w-full focus:outline-none focus:border-blue-500 transition-colors text-sm"
                                 />
-                                <button className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-xl transition-colors">
+                                <button aria-label="Subscribe to newsletter" className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-xl transition-colors">
                                     <ArrowRight className="h-5 w-5" />
                                 </button>
                             </div>

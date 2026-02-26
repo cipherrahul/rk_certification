@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import Image from "next/image";
 import { Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -134,9 +135,11 @@ export function StudentProfileCarousel() {
                                 <CardContent className="p-6 md:p-8 flex flex-col items-center text-center h-full">
                                     <div className="relative mb-6">
                                         <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full blur-sm opacity-40"></div>
-                                        <img
+                                        <Image
                                             src={student.image}
                                             alt={student.name}
+                                            width={96}
+                                            height={96}
                                             className="w-24 h-24 rounded-full object-cover border-4 border-white dark:border-slate-900 relative z-10 shadow-sm"
                                             draggable={false}
                                         />

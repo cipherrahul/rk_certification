@@ -1,6 +1,8 @@
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -18,8 +20,12 @@ import {
     Globe
 } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { StudentProfileCarousel } from '@/components/home/StudentProfileCarousel';
 import { useRef } from 'react';
+
+const StudentProfileCarousel = dynamic(() => import('@/components/home/StudentProfileCarousel').then(mod => mod.StudentProfileCarousel), {
+    loading: () => <div className="h-96 flex items-center justify-center">Loading Success Stories...</div>,
+    ssr: false
+});
 
 const stats = [
     { label: "Total Students", value: "5,000+", icon: Users, color: "text-blue-600" },
@@ -61,8 +67,8 @@ export default function HomeClient() {
                     <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] rounded-full bg-emerald-600/20 blur-[100px] animate-pulse delay-1000" />
                 </motion.div>
 
-                {/* Mesh Grid Overlay */}
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none" />
+                {/* Mesh Grid Overlay - Simplified and Local */}
+                <div className="absolute inset-0 bg-slate-950/20 mix-blend-overlay pointer-events-none" />
                 <div className="absolute inset-0 bg-grid-white/[0.02] [mask-image:radial-gradient(white,transparent_85%)]" />
 
                 <div className="container relative z-10 mx-auto max-w-6xl text-center">
@@ -77,27 +83,20 @@ export default function HomeClient() {
                         </div>
                     </motion.div>
 
-                    {/* H1 for Hero Title */}
-                    <motion.h1
-                        style={{ y: textY }}
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
-                        className="text-5xl md:text-8xl font-black tracking-tight text-white mb-8 leading-[1.1]"
+                    {/* H1 for Hero Title - Removed motion for LCP and SEO */}
+                    <h1
+                        className="text-5xl md:text-8xl font-black tracking-tight text-white mb-8 leading-[1.1] relative z-10"
                     >
                         Build Real <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">Skills.</span><br />
                         Shape Your <span className="italic font-serif">Future.</span>
-                    </motion.h1>
+                    </h1>
 
-                    <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.4 }}
-                        className="mt-6 text-xl text-slate-300 max-w-3xl mx-auto mb-12 leading-relaxed font-light"
+                    <p
+                        className="mt-6 text-xl text-slate-300 max-w-3xl mx-auto mb-12 leading-relaxed font-light relative z-10"
                     >
                         RK Institution provides industry-leading professional education designed to bridge the gap
                         between academic learning and real-world career success.
-                    </motion.p>
+                    </p>
 
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -106,13 +105,13 @@ export default function HomeClient() {
                         className="flex flex-col sm:flex-row gap-6 justify-center"
                     >
                         <Link href="/programs">
-                            <Button size="lg" className="h-14 px-10 text-lg font-semibold rounded-full bg-blue-600 hover:bg-blue-700 shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all hover:scale-105 group">
+                            <Button size="lg" aria-label="Explore education programs" className="h-14 px-10 text-lg font-semibold rounded-full bg-blue-600 hover:bg-blue-700 shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all hover:scale-105 group">
                                 Explore Programs
                                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                             </Button>
                         </Link>
                         <Link href="/contact">
-                            <Button className="h-14 px-10 text-lg font-medium border border-white/20 bg-white/5 text-white hover:bg-white/10 backdrop-blur-sm rounded-full transition-all hover:scale-105">
+                            <Button aria-label="Book a free counseling session" className="h-14 px-10 text-lg font-medium border border-white/20 bg-white/5 text-white hover:bg-white/10 backdrop-blur-sm rounded-full transition-all hover:scale-105">
                                 Book Free Counseling
                             </Button>
                         </Link>
@@ -147,7 +146,7 @@ export default function HomeClient() {
                                 <div className={`p-4 rounded-3xl bg-slate-50 dark:bg-slate-900 mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}>
                                     <stat.icon className={`h-8 w-8 ${stat.color}`} />
                                 </div>
-                                <h3 className="text-3xl md:text-4xl font-black mb-2 text-slate-900 dark:text-white tracking-tight">{stat.value}</h3>
+                                <div className="text-3xl md:text-4xl font-black mb-2 text-slate-900 dark:text-white tracking-tight">{stat.value}</div>
                                 <p className="text-slate-500 font-medium uppercase tracking-widest text-xs">{stat.label}</p>
                             </motion.div>
                         ))}
@@ -305,9 +304,15 @@ export default function HomeClient() {
                                 </div>
                                 <p className="text-lg text-slate-300 mb-8 italic leading-relaxed">&quot;{testi.text}&quot;</p>
                                 <div className="flex items-center gap-4">
-                                    <img src={testi.image} alt={testi.author} className="h-12 w-12 rounded-full object-cover border-2 border-blue-500" />
+                                    <Image
+                                        src={testi.image}
+                                        alt={testi.author}
+                                        width={48}
+                                        height={48}
+                                        className="h-12 w-12 rounded-full object-cover border-2 border-blue-500"
+                                    />
                                     <div>
-                                        <h5 className="font-bold">{testi.author}</h5>
+                                        <h4 className="font-bold">{testi.author}</h4>
                                         <p className="text-xs text-slate-500">{testi.role}</p>
                                     </div>
                                 </div>
@@ -354,11 +359,12 @@ export default function HomeClient() {
                             viewport={{ once: true }}
                             className="relative"
                         >
-                            <div className="aspect-video rounded-3xl bg-slate-200 overflow-hidden shadow-2xl">
-                                <img
+                            <div className="aspect-video rounded-3xl bg-slate-200 overflow-hidden shadow-2xl relative">
+                                <Image
                                     src="/images/campus/real_classroom.jpg"
                                     alt="RK Institution Classroom View"
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                    fill
+                                    className="object-cover group-hover:scale-105 transition-transform duration-700"
                                 />
                             </div>
                             <div className="absolute -bottom-6 -left-6 glass p-6 rounded-2xl hidden md:block">
@@ -400,13 +406,18 @@ export default function HomeClient() {
                                 className="group"
                             >
                                 <div className="relative overflow-hidden rounded-3xl mb-4 aspect-[4/5] shadow-xl">
-                                    <img src={mentor.img} alt={mentor.name} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700" />
+                                    <Image
+                                        src={mentor.img}
+                                        alt={mentor.name}
+                                        fill
+                                        className="object-cover group-hover:scale-110 transition-all duration-700"
+                                    />
                                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                     <div className="absolute bottom-4 left-4 right-4 translate-y-4 group-hover:translate-y-0 transition-transform opacity-0 group-hover:opacity-100">
-                                        <Button variant="secondary" size="sm" className="w-full rounded-xl">View Bio</Button>
+                                        <Button variant="secondary" size="sm" className="w-full rounded-xl" aria-label={`View bio of ${mentor.name}`}>View Bio</Button>
                                     </div>
                                 </div>
-                                <h5 className="text-xl font-bold">{mentor.name}</h5>
+                                <h4 className="text-xl font-bold">{mentor.name}</h4>
                                 <p className="text-blue-600 text-sm font-semibold">{mentor.role}</p>
                                 <p className="text-slate-500 text-xs font-medium">{mentor.exp}</p>
                             </motion.div>
