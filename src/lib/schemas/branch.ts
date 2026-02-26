@@ -24,14 +24,23 @@ export const branchClassSchema = z.object({
     }),
 });
 
+export const expenseCategorySchema = z.object({
+    name: z.string().min(2, "Category name is required"),
+    description: z.string().optional(),
+    color: z.string().regex(/^#[0-9A-F]{6}$/i, "Invalid hex color code").default("#6366f1"),
+});
+
 export const branchExpenseSchema = z.object({
     branchId: z.string().uuid("Invalid branch ID"),
-    type: z.enum(["Rent", "Electricity", "Marketing", "Other", "Salary"]),
+    categoryId: z.string().uuid("Invalid category ID"),
     amount: z.number().min(0, "Amount must be positive"),
     date: z.date({ message: "Date is required" }),
     description: z.string().optional(),
+    isRecurring: z.boolean().default(false),
+    recurringInterval: z.enum(["Monthly", "Weekly", "Yearly", "Quarterly"]).optional(),
 });
 
 export type BranchFormValues = z.infer<typeof branchSchema>;
 export type BranchClassFormValues = z.infer<typeof branchClassSchema>;
 export type BranchExpenseFormValues = z.infer<typeof branchExpenseSchema>;
+export type ExpenseCategoryFormValues = z.infer<typeof expenseCategorySchema>;
