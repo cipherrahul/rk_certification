@@ -115,3 +115,33 @@ export async function updateApplicationStatusAction(
     revalidatePath("/admin/jobs/applications");
     return { success: true };
 }
+
+export async function deleteApplicationAction(id: string, resumeUrl: string) {
+    const supabase = createClient();
+
+    // 1. Delete resume from storage
+    if (resumeUrl) {
+        const { error: storageError } = await supabase.storage
+            .from("resumes")
+            .remove([resumeUrl]);
+
+        if (storageError) {
+            console.error("Error deleting resume:", storageError);
+            // We continue anyway to try and delete the DB record
+        }
+    }
+
+    // 2. Delete application record
+    const { error: dbError } = await supabase
+        .from("job_applications")
+        .delete()
+        .eq("id", id);
+
+    if (dbError) {
+        console.error("Error deleting application:", dbError);
+        return { success: false, error: dbError.message };
+    }
+
+    revalidatePath("/admin/jobs/applications");
+    return { success: true };
+}

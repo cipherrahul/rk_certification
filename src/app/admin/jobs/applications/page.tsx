@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
     getJobApplicationsAction,
-    updateApplicationStatusAction
+    updateApplicationStatusAction,
+    deleteApplicationAction
 } from "@/lib/actions/application.action";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow
@@ -15,7 +16,7 @@ import {
     Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger
 } from "@/components/ui/dialog";
 import {
-    Search, FileText, MessageSquare, CheckCircle2, XCircle, Clock, ExternalLink, Loader2, ArrowLeft, DownloadCloud
+    Search, FileText, MessageSquare, CheckCircle2, XCircle, Clock, ExternalLink, Loader2, ArrowLeft, DownloadCloud, Trash2
 } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
@@ -78,6 +79,28 @@ export default function JobApplicationsPage() {
         } else {
             toast({
                 title: "Update Failed",
+                description: res.error,
+                variant: "destructive",
+            });
+        }
+        setIsUpdating(false);
+    };
+
+    const handleDelete = async (id: string, resumeUrl: string, name: string) => {
+        if (!confirm(`Are you sure you want to delete the application from ${name}? This action cannot be undone.`)) return;
+
+        setIsUpdating(true);
+        const res = await deleteApplicationAction(id, resumeUrl);
+
+        if (res.success) {
+            toast({
+                title: "Application Deleted",
+                description: `Successfully removed application from ${name}.`,
+            });
+            fetchApplications();
+        } else {
+            toast({
+                title: "Delete Failed",
                 description: res.error,
                 variant: "destructive",
             });
@@ -177,7 +200,7 @@ export default function JobApplicationsPage() {
                                         {format(new Date(app.applied_at), "MMM d, yyyy")}
                                     </TableCell>
                                     <TableCell>{getStatusBadge(app.status)}</TableCell>
-                                    <TableCell className="text-right">
+                                    <TableCell className="text-right flex items-center justify-end gap-2">
                                         <Dialog>
                                             <DialogTrigger asChild>
                                                 <Button
@@ -273,6 +296,15 @@ export default function JobApplicationsPage() {
                                                 </div>
                                             </DialogContent>
                                         </Dialog>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                            onClick={() => handleDelete(app.id, app.resume_url, app.full_name)}
+                                            disabled={isUpdating}
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ))
