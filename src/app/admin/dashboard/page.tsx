@@ -49,19 +49,6 @@ export default async function AdminDashboardPage() {
         .from('teachers')
         .select('*', { count: 'exact', head: true });
 
-    // Fetch recent fee payments for notifications
-    const { data: recentFees } = await supabase
-        .from('fee_payments')
-        .select('id, receipt_number, month, paid_amount, whatsapp_status, pdf_url, created_at, students(first_name, last_name)')
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-    // Fetch recent salary records for notifications
-    const { data: recentSalaries } = await supabase
-        .from('salary_records')
-        .select('id, slip_number, month, year, net_salary, whatsapp_status, pdf_url, created_at, teachers(name)')
-        .order('created_at', { ascending: false })
-        .limit(10);
 
     // Fetch recent inquiries for dashboard widget
     const { data: recentInquiries } = await supabase
@@ -79,36 +66,6 @@ export default async function AdminDashboardPage() {
 
     const totalPendingFees = (pendingFeesData || []).reduce((acc, p) => acc + Number(p.remaining_amount), 0);
 
-    // Combine and sort notifications
-    const notifications = [
-        ...(recentFees || []).map(f => {
-            const student = f.students as any;
-            return {
-                id: f.id,
-                type: "Fee Receipt",
-                identifier: f.receipt_number,
-                recipient: student ? `${student.first_name} ${student.last_name}` : "Unknown",
-                amount: f.paid_amount,
-                status: f.whatsapp_status,
-                pdf_url: f.pdf_url,
-                created_at: f.created_at
-            };
-        }),
-        ...(recentSalaries || []).map(s => {
-            const teacher = s.teachers as any;
-            return {
-                id: s.id,
-                type: "Salary Slip",
-                identifier: s.slip_number,
-                recipient: teacher ? teacher.name : "Unknown",
-                amount: s.net_salary,
-                status: s.whatsapp_status,
-                pdf_url: s.pdf_url,
-                created_at: s.created_at
-            };
-        })
-    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 15);
 
     const recentCount = certificates?.filter(
         c => new Date(c.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
@@ -332,76 +289,6 @@ export default async function AdminDashboardPage() {
                 </CardContent>
             </Card>
 
-            {/* WhatsApp Notifications Section */}
-            <Card className="shadow-sm border-border/60 bg-card mt-8">
-                <CardHeader className="pb-4 border-b border-border/40">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <div>
-                            <CardTitle className="text-lg text-foreground">Recent WhatsApp Notifications</CardTitle>
-                            <CardDescription className="text-muted-foreground">Status of automatically sent receipts and salary slips.</CardDescription>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                    <Table>
-                        <TableHeader className="bg-accent/40">
-                            <TableRow className="border-border/40 hover:bg-transparent">
-                                <TableHead className="w-[120px] font-semibold text-muted-foreground pl-6">Type</TableHead>
-                                <TableHead className="font-semibold text-muted-foreground">Recipient</TableHead>
-                                <TableHead className="font-semibold text-muted-foreground">ID / Slip No.</TableHead>
-                                <TableHead className="font-semibold text-muted-foreground">Date</TableHead>
-                                <TableHead className="font-semibold text-muted-foreground">WA Status</TableHead>
-                                <TableHead className="text-right font-semibold text-muted-foreground pr-6">PDF</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {notifications.length > 0 ? (
-                                notifications.map((notif) => (
-                                    <TableRow key={notif.id} className="border-border/40 hover:bg-accent/50 transition-colors">
-                                        <TableCell className="pl-6">
-                                            <Badge variant="outline" className={notif.type === "Fee Receipt" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-purple-50 text-purple-700 border-purple-200"}>
-                                                {notif.type}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="font-medium text-foreground">{notif.recipient}</TableCell>
-                                        <TableCell className="font-mono text-xs">{notif.identifier}</TableCell>
-                                        <TableCell className="text-sm text-muted-foreground">{new Date(notif.created_at).toLocaleDateString()}</TableCell>
-                                        <TableCell>
-                                            <Badge
-                                                variant="outline"
-                                                className={
-                                                    notif.status === "sent" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                                                        notif.status === "failed" ? "bg-red-50 text-red-700 border-red-200" :
-                                                            "bg-slate-50 text-slate-500 border-slate-200"
-                                                }
-                                            >
-                                                {notif.status?.toUpperCase() || "PENDING"}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right pr-6">
-                                            {notif.pdf_url ? (
-                                                <a href={notif.pdf_url} target="_blank" rel="noopener noreferrer">
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-600 hover:bg-indigo-50">
-                                                        <Download className="w-4 h-4" />
-                                                    </Button>
-                                                </a>
-                                            ) : (
-                                                <span className="text-[10px] text-muted-foreground italic">Pending...</span>
-                                            )}
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
-                                        No recent notifications found.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
 
             {/* Recent Inquiries Widget */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
