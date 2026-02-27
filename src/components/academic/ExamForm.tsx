@@ -13,7 +13,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
-import { COURSES } from "@/lib/schemas/student";
+import { getAllCoursesAction } from "@/lib/actions/course.action";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -25,6 +25,7 @@ import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface Branch {
     id: string;
@@ -32,8 +33,10 @@ interface Branch {
 }
 
 export function ExamForm() {
+    const { toast } = useToast();
     const router = useRouter();
     const [branches, setBranches] = useState<Branch[]>([]);
+    const [courses, setCourses] = useState<any[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const form = useForm<ExamFormValues>({
@@ -53,6 +56,9 @@ export function ExamForm() {
         getBranchesAction().then(res => {
             if (res.success) setBranches(res.data);
         });
+        getAllCoursesAction().then(res => {
+            if (res.success) setCourses(res.data || []);
+        });
     }, []);
 
     async function onSubmit(data: ExamFormValues) {
@@ -60,13 +66,14 @@ export function ExamForm() {
         try {
             const res = await createExamAction(data);
             if (res.success) {
+                toast({ title: "Success", description: "Exam scheduled successfully!" });
                 router.push("/admin/academic");
                 router.refresh();
             } else {
-                alert(res.error || "Failed to schedule exam");
+                toast({ title: "Error", description: res.error || "Failed to schedule exam", variant: "destructive" });
             }
         } catch (err) {
-            alert(err instanceof Error ? err.message : "An unexpected error occurred");
+            toast({ title: "Error", description: err instanceof Error ? err.message : "An unexpected error occurred", variant: "destructive" });
         } finally {
             setIsSubmitting(false);
         }
@@ -108,8 +115,8 @@ export function ExamForm() {
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                {COURSES.map(c => (
-                                                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                                                {courses.map(c => (
+                                                    <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>

@@ -1,4 +1,4 @@
-import { Plus, LayoutDashboard } from "lucide-react";
+import { Plus, LayoutDashboard, Settings, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getExamsAction, getGradeAnalyticsAction } from "@/lib/actions/exam.action";
@@ -23,12 +23,26 @@ export default async function ExamsPage() {
                     <h1 className="text-3xl font-black tracking-tighter text-foreground uppercase">Academic & Exams</h1>
                     <p className="text-muted-foreground mt-1 text-sm font-medium">Professional grade management and institutional performance tracking.</p>
                 </div>
-                <Link href="/admin/academic/exams/new">
-                    <Button className="bg-brand hover:bg-brand/90 text-brand-foreground shadow-lg px-6 font-bold">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Schedule New Exam
-                    </Button>
-                </Link>
+                <div className="flex gap-3">
+                    <Link href="/admin/academic/courses">
+                        <Button variant="outline" className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-600 font-bold">
+                            <GraduationCap className="w-4 h-4 mr-2" />
+                            Manage Courses
+                        </Button>
+                    </Link>
+                    <Link href="/admin/academic/subjects">
+                        <Button variant="outline" className="border-brand/20 text-brand hover:bg-brand/5 hover:text-brand font-bold">
+                            <Settings className="w-4 h-4 mr-2" />
+                            Manage Subjects
+                        </Button>
+                    </Link>
+                    <Link href="/admin/academic/exams/new">
+                        <Button className="bg-brand hover:bg-brand/90 text-brand-foreground shadow-lg px-6 font-bold">
+                            <Plus className="w-4 h-4 mr-2" />
+                            Schedule New Exam
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
             <Tabs defaultValue="schedules" className="space-y-6">

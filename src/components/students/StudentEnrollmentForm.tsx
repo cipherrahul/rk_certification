@@ -21,9 +21,10 @@ import {
 } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { studentFormSchema, StudentFormValues, COURSES } from "@/lib/schemas/student";
 import { createStudentAction } from "@/lib/actions/student.action";
 import { getBranchesAction } from "@/lib/actions/branch.action";
+import { getAllCoursesAction } from "@/lib/actions/course.action";
+import { studentFormSchema, StudentFormValues } from "@/lib/schemas/student";
 
 export function StudentEnrollmentForm() {
     const { toast } = useToast();
@@ -32,6 +33,7 @@ export function StudentEnrollmentForm() {
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const [photoBase64, setPhotoBase64] = useState<string | undefined>(undefined);
     const [branches, setBranches] = useState<any[]>([]);
+    const [courses, setCourses] = useState<any[]>([]);
     const searchParams = useSearchParams();
     const queryBranchId = searchParams.get("branchId");
 
@@ -58,6 +60,9 @@ export function StudentEnrollmentForm() {
     useEffect(() => {
         getBranchesAction().then(res => {
             if (res.success) setBranches(res.data);
+        });
+        getAllCoursesAction().then(res => {
+            if (res.success) setCourses(res.data || []);
         });
     }, []);
 
@@ -197,8 +202,8 @@ export function StudentEnrollmentForm() {
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {COURSES.map((c) => (
-                                                <SelectItem key={c} value={c}>{c}</SelectItem>
+                                            {courses.map((c) => (
+                                                <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>

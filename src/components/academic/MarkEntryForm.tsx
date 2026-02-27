@@ -12,6 +12,16 @@ import { recordMarksAction, deleteMarkAction } from "@/lib/actions/exam.action";
 import { useRouter } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { getSubjectsByCourseAction } from "@/lib/actions/subject.action";
+import { useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 interface Student {
     id: string;
@@ -42,8 +52,25 @@ interface MarkEntryFormProps {
 }
 
 export function MarkEntryForm({ exam, students, initialMarks }: MarkEntryFormProps) {
+    const { toast } = useToast();
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [subjects, setSubjects] = useState<any[]>([]);
+    const [selectedSubject, setSelectedSubject] = useState("Final");
+    const [isLoadingSubjects, setIsLoadingSubjects] = useState(true);
+
+    useEffect(() => {
+        async function fetchSubjects() {
+            setIsLoadingSubjects(true);
+            const res = await getSubjectsByCourseAction(exam.course);
+            if (res.success && res.data && res.data.length > 0) {
+                setSubjects(res.data);
+                setSelectedSubject(res.data[0].name);
+            }
+            setIsLoadingSubjects(false);
+        }
+        fetchSubjects();
+    }, [exam.course]);
     const [marks, setMarks] = useState<Record<string, MarkRecord>>(() => {
         const initialMap: Record<string, MarkRecord> = {};
         students.forEach(s => {
@@ -85,7 +112,7 @@ export function MarkEntryForm({ exam, students, initialMarks }: MarkEntryFormPro
         if (!confirm("Are you sure you want to delete this mark record? This action cannot be undone.")) return;
 
         try {
-            const res = await deleteMarkAction(exam.id, studentId, "Final");
+            const res = await deleteMarkAction(exam.id, studentId, selectedSubject);
             if (res.success) {
                 setMarks(prev => ({
                     ...prev,
@@ -111,7 +138,7 @@ export function MarkEntryForm({ exam, students, initialMarks }: MarkEntryFormPro
             const payload = Object.values(marks).map(m => ({
                 examId: exam.id,
                 studentId: m.studentId,
-                subjectName: "Final",
+                subjectName: selectedSubject,
                 marksObtained: m.marksObtained,
                 isAbsent: m.isAbsent,
                 remarks: m.remarks,
@@ -119,13 +146,13 @@ export function MarkEntryForm({ exam, students, initialMarks }: MarkEntryFormPro
 
             const res = await recordMarksAction(payload);
             if (res.success) {
-                alert("Marks recorded successfully!");
+                toast({ title: "Success", description: "Marks recorded successfully!" });
                 router.refresh();
             } else {
-                alert(res.error || "Failed to save marks");
+                toast({ title: "Error", description: res.error || "Failed to save marks", variant: "destructive" });
             }
         } catch (err: any) {
-            alert(err.message || "An unexpected error occurred");
+            toast({ title: "Error", description: err.message || "An unexpected error occurred", variant: "destructive" });
         } finally {
             setIsSubmitting(false);
         }
@@ -142,14 +169,31 @@ export function MarkEntryForm({ exam, students, initialMarks }: MarkEntryFormPro
                             Max marks: <span className="font-bold text-foreground">{exam.total_marks}</span>.
                         </CardDescription>
                     </div>
-                    <Button
-                        disabled={isSubmitting}
-                        onClick={handleSubmit}
-                        className="bg-brand hover:bg-brand/90 transition-all shadow-md"
-                    >
-                        {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                        {isSubmitting ? "Saving Marks..." : "Save All Marks"}
-                    </Button>
+                    <div className="flex items-center gap-3">
+                        {!isLoadingSubjects && subjects.length > 0 && (
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground mr-1">Subject:</span>
+                                <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                                    <SelectTrigger className="w-[180px] h-9 bg-background border-brand/20">
+                                        <SelectValue placeholder="Select Subject" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {subjects.map(s => (
+                                            <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+                        <Button
+                            disabled={isSubmitting}
+                            onClick={handleSubmit}
+                            className="bg-brand hover:bg-brand/90 transition-all shadow-md"
+                        >
+                            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                            {isSubmitting ? "Saving Marks..." : "Save All Marks"}
+                        </Button>
+                    </div>
                 </div>
             </CardHeader>
             <CardContent className="p-0">
