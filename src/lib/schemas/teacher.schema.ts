@@ -12,7 +12,7 @@ export const teacherSchema = z.object({
     joiningDate: z.date(),
     basicSalary: z.coerce.number().min(0, "Basic salary must be non-negative"),
     allowances: z.coerce.number().min(0, "Allowances must be non-negative"),
-    branchId: z.string().uuid("Invalid branch ID").optional(),
+    branchId: z.string().uuid("Invalid branch ID").or(z.literal("")).transform(v => v === "" ? undefined : v).optional(),
     role: z.enum(["Teacher", "Branch Head", "Staff"]).default("Teacher"),
 });
 

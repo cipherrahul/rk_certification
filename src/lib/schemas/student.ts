@@ -37,8 +37,8 @@ export const studentFormSchema = z.object({
   paymentStartDate: z.date({ message: "Payment start date is required" }),
   paymentMode: z.string().min(2, "Payment mode is required"),
   photo: z.any().optional(),
-  branchId: z.string().uuid("Invalid branch ID").optional(),
-  classId: z.string().uuid("Invalid class ID").optional(),
+  branchId: z.string().uuid("Invalid branch ID").or(z.literal("")).transform(v => v === "" ? undefined : v).optional(),
+  classId: z.string().uuid("Invalid class ID").or(z.literal("")).transform(v => v === "" ? undefined : v).optional(),
 });
 
 export type StudentFormValues = z.infer<typeof studentFormSchema>;

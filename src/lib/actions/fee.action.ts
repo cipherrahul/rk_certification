@@ -143,7 +143,7 @@ export async function getPaymentByReceiptNumberAction(receiptNo: string) {
 
         const { data, error } = await supabase
             .from("fee_payments")
-            .select(`*, students(first_name, last_name, course, student_id, academic_session)`)
+            .select(`*, students(first_name, last_name, course, student_id, academic_session, branches(*))`)
             .eq("receipt_number", receiptNo.trim().toUpperCase())
             .single();
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -51,14 +51,15 @@ export function StudentEnrollmentForm() {
             paymentMode: "Cash",
             branchId: queryBranchId || "",
             classId: "",
+            paymentStartDate: new Date(),
         },
     });
 
-    useState(() => {
+    useEffect(() => {
         getBranchesAction().then(res => {
             if (res.success) setBranches(res.data);
         });
-    });
+    }, []);
 
     function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
