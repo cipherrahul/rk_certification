@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { deleteStudentAction } from "@/lib/actions/student.action";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getFeeStatus(student: any) {
@@ -37,14 +38,14 @@ export function StudentTable({ students }: { students: any[] }) {
 
         // Fee status filter
         if (!matchesSearch) return false;
-        
+
         if (feeFilter === "All") return true;
-        
+
         const status = getFeeStatus(student);
         if (feeFilter === "Paid" && status === "Paid") return true;
         if (feeFilter === "Pending" && status === "Pending") return true;
         if (feeFilter === "No Records" && status === "No Records") return true;
-        
+
         return false;
     });
 
@@ -127,9 +128,33 @@ export function StudentTable({ students }: { students: any[] }) {
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Link href={`/admin/students/${student.id}`}>
-                                                <Button variant="outline" size="sm">View Profile</Button>
-                                            </Link>
+                                            <div className="flex justify-end gap-2">
+                                                <Link href={`/admin/students/${student.id}`}>
+                                                    <Button variant="outline" size="sm" className="h-8">View</Button>
+                                                </Link>
+                                                <Link href={`/admin/students/${student.id}/edit`}>
+                                                    <Button variant="outline" size="sm" className="h-8 border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-600">
+                                                        <Pencil className="w-3.5 h-3.5 mr-1" /> Edit
+                                                    </Button>
+                                                </Link>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-8 border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-600"
+                                                    onClick={async () => {
+                                                        if (confirm(`Are you sure you want to delete ${student.first_name}? This will remove all records including fees.`)) {
+                                                            const res = await deleteStudentAction(student.id);
+                                                            if (res.success) {
+                                                                location.reload();
+                                                            } else {
+                                                                alert(res.error);
+                                                            }
+                                                        }
+                                                    }}
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 );

@@ -156,3 +156,92 @@ export async function getStudentByIdAction(id: string) {
         return { success: false, error: err instanceof Error ? err.message : "Unexpected error" };
     }
 }
+
+// ── updateStudentAction ─────────────────────────────────────
+export async function updateStudentAction(
+    id: string,
+    data: StudentFormValues,
+    photoBase64?: string
+) {
+    try {
+        const { supabase } = await verifyAdmin();
+
+        // Upload photo if provided
+        let photoUrl: string | undefined = undefined;
+        if (photoBase64 && photoBase64.startsWith("data:image")) {
+            const base64Data = photoBase64.replace(/^data:image\/\w+;base64,/, "");
+            const buffer = Buffer.from(base64Data, "base64");
+            const ext = photoBase64.split(";")[0].split("/")[1] || "jpg";
+            const filePath = `photos/${id}_${Date.now()}.${ext}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from("students")
+                .upload(filePath, buffer, { contentType: `image/${ext}`, upsert: true });
+
+            if (!uploadError) {
+                const { data: urlData } = supabase.storage
+                    .from("students")
+                    .getPublicUrl(filePath);
+                photoUrl = urlData.publicUrl;
+            }
+        }
+
+        const updateData: any = {
+            first_name: data.firstName,
+            last_name: data.lastName,
+            date_of_birth: data.dateOfBirth.toISOString().split("T")[0],
+            father_name: data.fatherName,
+            mobile: data.mobile,
+            course: data.course,
+            academic_session: data.academicSession,
+            student_class: data.studentClass,
+            total_course_fee: data.totalCourseFee,
+            admission_fee: data.admissionFee,
+            monthly_fee_amount: data.monthlyFeeAmount,
+            payment_start_date: data.paymentStartDate.toISOString().split("T")[0],
+            payment_mode: data.paymentMode,
+            branch_id: data.branchId,
+            class_id: data.classId,
+        };
+
+        if (photoUrl) updateData.photo_url = photoUrl;
+
+        const { error: updateError } = await supabase
+            .from("students")
+            .update(updateData)
+            .eq("id", id);
+
+        if (updateError) {
+            console.error("Update error:", updateError);
+            return { success: false, error: "Failed to update student." };
+        }
+
+        revalidatePath("/admin/students");
+        revalidatePath(`/admin/students/${id}`);
+        return { success: true };
+    } catch (err: unknown) {
+        return { success: false, error: err instanceof Error ? err.message : "Unexpected error" };
+    }
+}
+
+// ── deleteStudentAction ─────────────────────────────────────
+export async function deleteStudentAction(id: string) {
+    try {
+        const { supabase } = await verifyAdmin();
+
+        const { error: deleteError } = await supabase
+            .from("students")
+            .delete()
+            .eq("id", id);
+
+        if (deleteError) {
+            console.error("Delete error:", deleteError);
+            return { success: false, error: "Failed to delete student. They might have linked records (fees, exams)." };
+        }
+
+        revalidatePath("/admin/students");
+        return { success: true };
+    } catch (err: unknown) {
+        return { success: false, error: err instanceof Error ? err.message : "Unexpected error" };
+    }
+}

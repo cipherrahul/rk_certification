@@ -21,16 +21,21 @@ import {
 } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { createStudentAction } from "@/lib/actions/student.action";
+import { createStudentAction, updateStudentAction } from "@/lib/actions/student.action";
 import { getBranchesAction } from "@/lib/actions/branch.action";
 import { getAllCoursesAction } from "@/lib/actions/course.action";
 import { studentFormSchema, StudentFormValues } from "@/lib/schemas/student";
 
-export function StudentEnrollmentForm() {
+interface StudentEnrollmentFormProps {
+    studentId?: string;
+    initialData?: Partial<StudentFormValues> & { photo_url?: string };
+}
+
+export function StudentEnrollmentForm({ studentId, initialData }: StudentEnrollmentFormProps) {
     const { toast } = useToast();
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
-    const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+    const [photoPreview, setPhotoPreview] = useState<string | null>(initialData?.photo_url || null);
     const [photoBase64, setPhotoBase64] = useState<string | undefined>(undefined);
     const [branches, setBranches] = useState<any[]>([]);
     const [courses, setCourses] = useState<any[]>([]);
@@ -40,20 +45,21 @@ export function StudentEnrollmentForm() {
     const form = useForm<StudentFormValues>({
         resolver: zodResolver(studentFormSchema),
         defaultValues: {
-            firstName: "",
-            lastName: "",
-            fatherName: "",
-            mobile: "",
-            course: "",
-            academicSession: "2026-27",
-            studentClass: "",
-            totalCourseFee: 0,
-            admissionFee: 0,
-            monthlyFeeAmount: 0,
-            paymentMode: "Cash",
-            branchId: queryBranchId || "",
-            classId: "",
-            paymentStartDate: new Date(),
+            firstName: initialData?.firstName || "",
+            lastName: initialData?.lastName || "",
+            fatherName: initialData?.fatherName || "",
+            mobile: initialData?.mobile || "",
+            course: initialData?.course || "",
+            academicSession: initialData?.academicSession || "2026-27",
+            studentClass: initialData?.studentClass || "",
+            totalCourseFee: initialData?.totalCourseFee || 0,
+            admissionFee: initialData?.admissionFee || 0,
+            monthlyFeeAmount: initialData?.monthlyFeeAmount || 0,
+            paymentMode: initialData?.paymentMode || "Cash",
+            branchId: initialData?.branchId || queryBranchId || "",
+            classId: initialData?.classId || "",
+            paymentStartDate: initialData?.paymentStartDate ? new Date(initialData.paymentStartDate) : new Date(),
+            dateOfBirth: initialData?.dateOfBirth ? new Date(initialData.dateOfBirth) : undefined,
         },
     });
 
@@ -81,13 +87,19 @@ export function StudentEnrollmentForm() {
     async function onSubmit(data: StudentFormValues) {
         setIsLoading(true);
         try {
-            const result = await createStudentAction(data, photoBase64);
+            const result = studentId
+                ? await updateStudentAction(studentId, data, photoBase64)
+                : await createStudentAction(data, photoBase64);
+
             if (result.success) {
                 toast({
-                    title: "Student Enrolled!",
-                    description: `Student ID: ${result.studentId} created successfully.`,
+                    title: studentId ? "Student Updated!" : "Student Enrolled!",
+                    description: studentId
+                        ? `Changes saved successfully.`
+                        : `Student ID: ${(result as any).studentId} created successfully.`,
                 });
-                router.push("/admin/students");
+                router.push(studentId ? `/admin/students/${studentId}` : "/admin/students");
+                router.refresh();
             } else {
                 toast({ title: "Error", description: result.error, variant: "destructive" });
             }
@@ -324,9 +336,9 @@ export function StudentEnrollmentForm() {
 
                 <Button type="submit" className="w-full h-12 text-base bg-indigo-600 hover:bg-indigo-700 text-white" disabled={isLoading}>
                     {isLoading ? (
-                        <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Enrolling Student...</>
+                        <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> {studentId ? "Saving Changes..." : "Enrolling Student..."}</>
                     ) : (
-                        "Enroll Student"
+                        studentId ? "Save Changes" : "Enroll Student"
                     )}
                 </Button>
             </form>
