@@ -9,6 +9,7 @@ import { GraduationCap, Menu, X } from 'lucide-react';
 const navLinks = [
     { href: '/', label: 'Home' },
     { href: '/about', label: 'About Us' },
+    { href: '/results', label: 'Student Results' },
     { href: '/careers', label: 'Careers' },
     { href: '/verify', label: 'Verify Certificate' },
     { href: '/verify-receipt', label: 'Verify Fee Receipt' },
@@ -40,8 +41,8 @@ export default function Navbar() {
                                 key={link.href}
                                 href={link.href}
                                 className={`text-sm font-medium transition-colors ${pathname === link.href
-                                        ? 'text-primary'
-                                        : 'text-muted-foreground hover:text-primary'
+                                    ? 'text-primary'
+                                    : 'text-muted-foreground hover:text-primary'
                                     }`}
                             >
                                 {link.label}
@@ -76,8 +77,8 @@ export default function Navbar() {
                             href={link.href}
                             onClick={() => setMobileOpen(false)}
                             className={`block py-2.5 px-3 rounded-md text-sm font-medium transition-colors ${pathname === link.href
-                                    ? 'bg-primary/10 text-primary'
-                                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                                ? 'bg-primary/10 text-primary'
+                                : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                                 }`}
                         >
                             {link.label}
