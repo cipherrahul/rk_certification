@@ -110,6 +110,12 @@ export default async function AdminDashboardPage() {
                             Certifications
                         </Button>
                     </Link>
+                    <Link href="/admin/academic" className="hidden sm:inline-block">
+                        <Button variant="outline" className="shadow-sm border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 transition-all font-semibold">
+                            <GraduationCap className="w-4 h-4 mr-2" />
+                            Academic & Exams
+                        </Button>
+                    </Link>
                     <Link href="/admin/offer-letter" className="hidden sm:inline-block">
                         <Button variant="outline" className="shadow-sm border-border/60 hover:bg-accent hover:text-foreground">
                             <FileText className="w-4 h-4 mr-2" />
