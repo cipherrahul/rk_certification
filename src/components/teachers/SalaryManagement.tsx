@@ -130,10 +130,20 @@ export function SalaryManagement({ teacher, initialRecords }: SalaryManagementPr
         if (!el) return;
         setDownloadingId(record.id);
         try {
-            const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
-            const imgData = canvas.toDataURL("image/png");
-            const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: [680, 420] });
-            pdf.addImage(imgData, "PNG", 0, 0, 680, 420);
+            const canvas = await html2canvas(el, {
+                scale: 4,
+                useCORS: true,
+                backgroundColor: "#ffffff",
+                logging: false
+            });
+            const imgData = canvas.toDataURL("image/jpeg", 1.0);
+            // Create a landscape PDF matching the component width
+            const pdf = new jsPDF({
+                orientation: "landscape",
+                unit: "pt",
+                format: [950, 600]
+            });
+            pdf.addImage(imgData, "JPEG", 0, 0, 950, 600);
             pdf.save(`${record.slip_number}-${teacher.name.replace(/\s+/g, "_")}.pdf`);
         } catch (e) {
             console.error("PDF generation failed:", e);

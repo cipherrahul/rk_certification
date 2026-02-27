@@ -40,84 +40,93 @@ export async function generateSalarySlipPDF(recordId: string): Promise<string | 
         const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
         const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-        const page = pdfDoc.addPage(PageSizes.A4);
+        const page = pdfDoc.addPage([842, 595]); // A4 Landscape
         const { width, height } = page.getSize();
 
-        // Header Background
+        // 0. Repeating Background Watermark
+        const watermarkText = "RK INSTITUTION";
+        const spacingX = 180;
+        const spacingY = 120;
+
+        for (let x = -50; x < width + 100; x += spacingX) {
+            for (let y = -50; y < height + 100; y += spacingY) {
+                page.drawText(watermarkText, {
+                    x, y, size: 14, font: boldFont, color: DARK_NAVY, opacity: 0.05,
+                    rotate: { angle: 45, type: 'degrees' as any }
+                });
+            }
+        }
+
+        // 1. Outer Border
         page.drawRectangle({
-            x: 40,
-            y: height - 120,
-            width: width - 80,
-            height: 80,
-            color: DARK_NAVY
+            x: 40, y: 60, width: width - 80, height: height - 120,
+            borderWidth: 2, borderColor: DARK_NAVY, color: WHITE
         });
 
-        // RK Logo
-        page.drawRectangle({
-            x: 60,
-            y: height - 100,
-            width: 40,
-            height: 40,
-            color: rgb(0.7, 0.18, 0), // #b32d00
-        });
-        page.drawText("RK", { x: 68, y: height - 85, size: 16, font: boldFont, color: WHITE });
+        // 2. Header Section
+        page.drawRectangle({ x: 60, y: height - 150, width: 80, height: 80, borderWidth: 2, borderColor: DARK_NAVY });
+        page.drawText("RK", { x: 75, y: height - 110, size: 32, font: boldFont, color: DARK_NAVY });
 
-        page.drawText(INSTITUTE_NAME, { x: 115, y: height - 75, size: 18, font: boldFont, color: WHITE });
-        page.drawText(`${INSTITUTE_ADDRESS} | ${WEBSITE}`, { x: 115, y: height - 90, size: 8, font: regularFont, color: rgb(0.7, 0.7, 0.7) });
+        page.drawText(INSTITUTE_NAME, { x: 160, y: height - 100, size: 28, font: boldFont, color: DARK_NAVY });
+        page.drawText(`${INSTITUTE_ADDRESS} | ${WEBSITE}`, { x: 160, y: height - 125, size: 11, font: regularFont, color: DARK_NAVY });
 
-        page.drawText("SALARY SLIP", { x: width - 160, y: height - 75, size: 14, font: boldFont, color: rgb(0.94, 0.75, 0.44) });
-        page.drawText(record.slip_number, { x: width - 160, y: height - 90, size: 9, font: regularFont, color: rgb(0.8, 0.8, 0.8) });
+        const title = "SALARY SLIP";
+        const titleWidth = boldFont.widthOfTextAtSize(title, 20);
+        page.drawText(title, { x: width - 60 - titleWidth, y: height - 100, size: 20, font: boldFont, color: DARK_NAVY });
+        page.drawText(`No: ${record.slip_number}`, { x: width - 180, y: height - 125, size: 14, font: boldFont, color: DARK_NAVY });
+        page.drawText(`${record.month} ${record.year}`, { x: width - 180, y: height - 145, size: 11, font: boldFont, color: DARK_NAVY });
 
-        // Pay Period
-        page.drawText(`Pay Period: ${record.month} ${record.year}`, { x: width - 180, y: height - 110, size: 10, font: boldFont, color: rgb(0.94, 0.75, 0.44) });
+        page.drawLine({ start: { x: 60, y: height - 170 }, end: { x: width - 60, y: height - 170 }, thickness: 2, color: DARK_NAVY });
 
-        // Employee Details Section
-        let y = height - 160;
-        page.drawText("EMPLOYEE DETAILS", { x: 60, y, size: 9, font: boldFont, color: GRAY });
+        // 3. Main Body
+        let leftX = 60;
+        let rightX = width / 2 + 20;
+        let bodyY = height - 210;
 
-        y -= 25;
-        const details = [
-            { label: "Employee Name", value: teacher.name },
-            { label: "Employee ID", value: teacher.teacher_id },
-            { label: "Department", value: teacher.department },
-            { label: "Assigned Class", value: teacher.assigned_class },
-            { label: "Joining Date", value: new Date(teacher.joining_date).toLocaleDateString("en-IN") },
-            { label: "Payment Status", value: record.payment_status }
-        ];
+        // Left: Employee Info
+        page.drawText("EMPLOYEE INFORMATION", { x: leftX, y: bodyY, size: 12, font: boldFont, color: DARK_NAVY });
+        page.drawLine({ start: { x: leftX, y: bodyY - 5 }, end: { x: leftX + 160, y: bodyY - 5 }, thickness: 1, color: DARK_NAVY });
 
-        let col1Y = y;
-        details.forEach((item, idx) => {
-            const currentY = col1Y - (Math.floor(idx / 2) * 25);
-            const x = idx % 2 === 0 ? 60 : 300;
-            page.drawText(item.label, { x, y: currentY, size: 8, font: regularFont, color: GRAY });
-            page.drawText(String(item.value), { x, y: currentY - 12, size: 10, font: boldFont, color: DARK_NAVY });
-        });
+        const drawField = (label: string, value: string, currentY: number) => {
+            page.drawText(label, { x: leftX, y: currentY, size: 10, font: boldFont, color: DARK_NAVY });
+            page.drawText(value, { x: leftX + 100, y: currentY, size: 10, font: regularFont, color: DARK_NAVY });
+            page.drawLine({ start: { x: leftX, y: currentY - 10 }, end: { x: rightX - 60, y: currentY - 10 }, thickness: 0.5, color: rgb(0.8, 0.8, 0.8) });
+        };
 
-        // Earnings and Deductions Table
-        y -= 80;
-        page.drawRectangle({ x: 40, y: y - 100, width: width - 80, height: 120, color: LIGHT_GRAY, opacity: 0.5 });
+        drawField("Name:", teacher.name, bodyY - 40);
+        drawField("Emp ID:", teacher.teacher_id, bodyY - 70);
+        drawField("Dept:", teacher.department, bodyY - 100);
+        drawField("Subject:", teacher.subject, bodyY - 130);
+        drawField("Joining:", new Date(teacher.joining_date).toLocaleDateString("en-IN"), bodyY - 160);
 
-        page.drawText("EARNINGS", { x: 60, y: y - 15, size: 9, font: boldFont, color: GRAY });
-        page.drawText("Basic Salary:", { x: 60, y: y - 40, size: 10, font: regularFont, color: DARK_NAVY });
-        page.drawText(formatCurrency(record.basic_salary), { x: width - 250, y: y - 40, size: 10, font: boldFont, color: DARK_NAVY });
+        // Right: Salary Summary
+        page.drawText("SALARY SUMMARY", { x: rightX, y: bodyY, size: 12, font: boldFont, color: DARK_NAVY });
+        page.drawLine({ start: { x: rightX, y: bodyY - 5 }, end: { x: rightX + 130, y: bodyY - 5 }, thickness: 1, color: DARK_NAVY });
 
-        page.drawText("Allowances:", { x: 60, y: y - 60, size: 10, font: regularFont, color: DARK_NAVY });
-        page.drawText(formatCurrency(record.allowances), { x: width - 250, y: y - 60, size: 10, font: boldFont, color: DARK_NAVY });
+        page.drawRectangle({ x: rightX, y: bodyY - 180, width: width - rightX - 60, height: 160, borderWidth: 1.5, borderColor: DARK_NAVY });
 
-        y -= 120;
-        page.drawText("DEDUCTIONS", { x: 60, y: y + 15, size: 9, font: boldFont, color: GRAY });
-        page.drawText("Total Deductions:", { x: 60, y: y - 10, size: 10, font: regularFont, color: DARK_NAVY });
-        page.drawText(formatCurrency(record.deductions), { x: width - 250, y: y - 10, size: 10, font: boldFont, color: rgb(0.75, 0.22, 0.17) });
+        const drawRow = (label: string, value: string, currentY: number, isTotal = false) => {
+            page.drawText(label, { x: rightX + 15, y: currentY, size: 10, font: isTotal ? boldFont : regularFont, color: DARK_NAVY });
+            page.drawText(value, { x: width - 180, y: currentY, size: isTotal ? 14 : 10, font: boldFont, color: DARK_NAVY });
+        };
 
-        // Net Pay Box
-        y -= 60;
-        page.drawRectangle({ x: 40, y, width: width - 80, height: 50, color: DARK_NAVY });
-        page.drawText("NET PAY:", { x: 60, y: y + 20, size: 10, font: boldFont, color: rgb(0.8, 0.8, 0.8) });
-        page.drawText(formatCurrency(record.net_salary), { x: 130, y: y + 15, size: 18, font: boldFont, color: rgb(0.94, 0.75, 0.44) });
+        drawRow("Basic Salary:", formatCurrency(record.basic_salary), bodyY - 40);
+        drawRow("Allowances:", formatCurrency(record.allowances), bodyY - 70);
+        drawRow("Deductions:", `-${formatCurrency(record.deductions)}`, bodyY - 100);
 
-        // Footer
-        page.drawText("Authorized Signatory: RK Institution", { x: width - 250, y: y - 40, size: 9, font: boldFont, color: DARK_NAVY });
-        page.drawText("This is a computer generated document.", { x: 60, y: y - 40, size: 8, font: regularFont, color: GRAY });
+        page.drawLine({ start: { x: rightX + 10, y: bodyY - 125 }, end: { x: width - 70, y: bodyY - 125 }, thickness: 2, color: DARK_NAVY });
+        drawRow("NET TAKE HOME:", formatCurrency(record.net_salary), bodyY - 145, true);
+        page.drawLine({ start: { x: rightX + 10, y: bodyY - 155 }, end: { x: width - 70, y: bodyY - 155 }, thickness: 2, color: DARK_NAVY });
+
+        // 4. Footer
+        const footerY = 100;
+        page.drawLine({ start: { x: 60, y: footerY + 20 }, end: { x: width - 60, y: footerY + 20 }, thickness: 2, color: DARK_NAVY });
+
+        page.drawRectangle({ x: 60, y: footerY - 15, width: 180, height: 25, borderWidth: 1.5, borderColor: DARK_NAVY });
+        page.drawText("VERIFIED DIGITAL PAY SLIP", { x: 80, y: footerY - 5, size: 8, font: boldFont, color: DARK_NAVY });
+
+        page.drawText("Authorized Signatory — RK Institution", { x: width - 250, y: footerY - 5, size: 9, font: boldFont, color: DARK_NAVY });
+        page.drawText("Computer Generated document. Valid without signature.", { x: 60, y: 75, size: 7, font: regularFont, color: GRAY });
 
         const pdfBytes = await pdfDoc.save();
 
