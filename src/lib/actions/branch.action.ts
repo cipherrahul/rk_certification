@@ -237,3 +237,46 @@ export async function getCompanyWideAnalyticsAction() {
         return { success: false, error: err.message };
     }
 }
+
+export async function updateBranchAction(id: string, data: BranchFormValues) {
+    try {
+        const { supabase } = await verifyAdmin();
+        const { error } = await supabase
+            .from("branches")
+            .update({
+                name: data.name,
+                code: data.code,
+                city: data.city,
+                state: data.state,
+                address: data.address,
+                contact_number: data.contactNumber,
+                email: data.email,
+                opening_date: data.openingDate.toISOString().split("T")[0],
+                status: data.status,
+            })
+            .eq("id", id);
+
+        if (error) throw error;
+        revalidatePath("/admin/branches");
+        revalidatePath(`/admin/branches/${id}`);
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function deleteBranchAction(id: string) {
+    try {
+        const { supabase } = await verifyAdmin();
+        const { error } = await supabase
+            .from("branches")
+            .delete()
+            .eq("id", id);
+
+        if (error) throw error;
+        revalidatePath("/admin/branches");
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}

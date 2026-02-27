@@ -2,29 +2,66 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Building, MapPin, Phone, Mail, Calendar, MoreVertical, Search } from "lucide-react";
+import { Plus, Building, MapPin, Phone, Mail, Calendar, MoreVertical, Search, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { getBranchesAction } from "@/lib/actions/branch.action";
+import { getBranchesAction, deleteBranchAction } from "@/lib/actions/branch.action";
 import { formatDate } from "@/lib/utils";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export default function BranchesPage() {
     const [branches, setBranches] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
+    const { toast } = useToast();
+
+    async function loadBranches() {
+        const res = await getBranchesAction();
+        if (res.success) {
+            setBranches(res.data);
+        }
+        setLoading(false);
+    }
 
     useEffect(() => {
-        async function loadBranches() {
-            const res = await getBranchesAction();
-            if (res.success) {
-                setBranches(res.data);
-            }
-            setLoading(false);
-        }
         loadBranches();
     }, []);
+
+    const handleDelete = async (id: string) => {
+        const res = await deleteBranchAction(id);
+        if (res.success) {
+            toast({
+                title: "Success",
+                description: "Branch deleted successfully.",
+            });
+            loadBranches();
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: res.error || "Failed to delete branch.",
+            });
+        }
+    };
 
     const filteredBranches = branches.filter(b =>
         b.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -82,9 +119,55 @@ export default function BranchesPage() {
                                     <div className="p-2 rounded-lg bg-white shadow-sm ring-1 ring-border/20">
                                         <Building className="w-6 h-6 text-brand" />
                                     </div>
-                                    <Badge variant={branch.status === 'Active' ? 'default' : 'secondary'} className={branch.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : ''}>
-                                        {branch.status}
-                                    </Badge>
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant={branch.status === 'Active' ? 'default' : 'secondary'} className={branch.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : ''}>
+                                            {branch.status}
+                                        </Badge>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                    <MoreVertical className="w-4 h-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <Link href={`/admin/branches/${branch.id}/edit`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <Pencil className="w-4 h-4 mr-2" />
+                                                        Edit Details
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <DropdownMenuItem
+                                                            className="cursor-pointer text-destructive focus:text-destructive"
+                                                            onSelect={(e) => e.preventDefault()}
+                                                        >
+                                                            <Trash2 className="w-4 h-4 mr-2" />
+                                                            Delete Branch
+                                                        </DropdownMenuItem>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                This action cannot be undone. This will permanently delete the
+                                                                branch <strong>{branch.name}</strong> and remove its data from our servers.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction
+                                                                onClick={() => handleDelete(branch.id)}
+                                                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                            >
+                                                                Delete
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
                                 </div>
                                 <CardTitle className="mt-4">{branch.name}</CardTitle>
                                 <CardDescription className="font-mono text-xs uppercase tracking-wider">{branch.code}</CardDescription>
