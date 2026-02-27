@@ -14,7 +14,7 @@ export default async function StudentProfilePage({ params }: { params: { id: str
 
     const { data: student, error } = await supabase
         .from("students")
-        .select("*, fee_payments(*)")
+        .select("*, branches(*), fee_payments(*)")
         .eq("id", params.id)
         .single();
 

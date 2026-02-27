@@ -10,6 +10,11 @@ interface SalarySlipProps {
         subject: string;
         qualification: string;
         joining_date: string;
+        branches?: {
+            address: string;
+            contact_number: string;
+            email: string;
+        };
     };
     record: {
         slip_number: string;
@@ -55,8 +60,9 @@ export const SalarySlip = React.forwardRef<HTMLDivElement, SalarySlipProps>(
                             <h1 className="text-3xl font-black tracking-tight text-black uppercase">RK Institution</h1>
                             <p className="text-sm font-bold mt-1 text-black">Professional Excellence Since 2016</p>
                             <div className="flex flex-col mt-2 text-xs font-bold space-y-0.5 text-black">
-                                <span className="flex items-center gap-1">A-9 Adarsh Nagar, Delhi 110033</span>
-                                <span className="flex items-center gap-1">Tel: +91 7533042633</span>
+                                <span className="flex items-center gap-1">{teacher.branches?.address || "A-9 Adarsh Nagar, Delhi 110033"}</span>
+                                <span className="flex items-center gap-1">Tel: {teacher.branches?.contact_number || "+91 7533042633"}</span>
+                                <span className="flex items-center gap-1">Email: {teacher.branches?.email || "info@rkinstitution.com"}</span>
                             </div>
                         </div>
                     </div>

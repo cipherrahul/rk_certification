@@ -142,7 +142,7 @@ export async function getTeacherByIdAction(id: string) {
 
         const { data, error } = await supabase
             .from("teachers")
-            .select(`*, salary_records(*)`)
+            .select(`*, branches(*), salary_records(*)`)
             .eq("id", id)
             .single();
 

@@ -19,6 +19,11 @@ interface FeeReceiptViewProps {
             course: string;
             student_id: string;
             academic_session: string;
+            branches?: {
+                address: string;
+                contact_number: string;
+                email: string;
+            };
         };
     };
 }
@@ -110,8 +115,9 @@ export const FeeReceiptView = React.forwardRef<HTMLDivElement, FeeReceiptViewPro
                                 <h1 className="text-3xl font-black tracking-tight text-black uppercase">RK Institution</h1>
                                 <p className="text-sm font-bold mt-1">Professional Excellence Since 2016</p>
                                 <div className="flex flex-col mt-2 text-xs font-bold space-y-0.5">
-                                    <span className="flex items-center gap-1">A-9 Adarsh Nagar, Delhi 110033</span>
-                                    <span className="flex items-center gap-1">Tel: +91 7533042633</span>
+                                    <span className="flex items-center gap-1">{s.branches?.address || "A-9 Adarsh Nagar, Delhi 110033"}</span>
+                                    <span className="flex items-center gap-1">Tel: {s.branches?.contact_number || "+91 7533042633"}</span>
+                                    <span className="flex items-center gap-1">Email: {s.branches?.email || "info@rkinstitution.com"}</span>
                                 </div>
                             </div>
                         </div>

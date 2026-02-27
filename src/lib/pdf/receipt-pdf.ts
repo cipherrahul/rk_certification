@@ -28,9 +28,10 @@ export async function generateFeeReceiptPDF(paymentId: string): Promise<string |
     const supabase = createClient();
 
     // 1. Fetch payment and student details
+    // 1. Fetch payment and student details with branch info
     const { data: receipt, error } = await supabase
         .from("fee_payments")
-        .select(`*, students(*)`)
+        .select(`*, students(*, branches(*))`)
         .eq("id", paymentId)
         .single();
 
@@ -40,6 +41,7 @@ export async function generateFeeReceiptPDF(paymentId: string): Promise<string |
     }
 
     const student = receipt.students;
+    const branch = student.branches;
 
     try {
         // 2. Create PDF
@@ -100,21 +102,15 @@ export async function generateFeeReceiptPDF(paymentId: string): Promise<string |
             color: DARK
         });
 
-        // Institution Details
-        page.drawText(INSTITUTE_NAME, {
-            x: 160,
-            y: height - 100,
-            size: 28,
-            font: boldFont,
-            color: DARK
-        });
-        page.drawText(`${INSTITUTE_ADDRESS}  |  Tel: ${INSTITUTE_PHONE}`, {
-            x: 160,
-            y: height - 125,
-            size: 11,
-            font: regularFont,
-            color: DARK
-        });
+        // Institution Details (Dynamic)
+        page.drawText(INSTITUTE_NAME, { x: 160, y: height - 100, size: 28, font: boldFont, color: DARK });
+
+        const branchAddress = branch?.address || "A-9 Adarsh Nagar, Delhi 110033";
+        const branchContact = branch?.contact_number || "+91 7533042633";
+        const branchEmail = branch?.email || "info@rkinstitution.com";
+
+        page.drawText(branchAddress, { x: 160, y: height - 120, size: 10, font: regularFont, color: DARK });
+        page.drawText(`Tel: ${branchContact} | Email: ${branchEmail}`, { x: 160, y: height - 135, size: 10, font: regularFont, color: DARK });
 
         // Receipt Meta (Right Side of Header)
         const receiptTitle = "FEE RECEIPT";

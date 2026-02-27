@@ -22,9 +22,10 @@ export async function generateSalarySlipPDF(recordId: string): Promise<string | 
     const supabase = createClient();
 
     // 1. Fetch record and teacher details
+    // 1. Fetch record and teacher details with branch info
     const { data: record, error } = await supabase
         .from("salary_records")
-        .select(`*, teachers(*)`)
+        .select(`*, teachers(*, branches(*))`)
         .eq("id", recordId)
         .single();
 
@@ -34,6 +35,7 @@ export async function generateSalarySlipPDF(recordId: string): Promise<string | 
     }
 
     const teacher = record.teachers;
+    const branch = teacher.branches;
 
     try {
         const pdfDoc = await PDFDocument.create();
@@ -68,7 +70,13 @@ export async function generateSalarySlipPDF(recordId: string): Promise<string | 
         page.drawText("RK", { x: 75, y: height - 110, size: 32, font: boldFont, color: DARK_NAVY });
 
         page.drawText(INSTITUTE_NAME, { x: 160, y: height - 100, size: 28, font: boldFont, color: DARK_NAVY });
-        page.drawText(`${INSTITUTE_ADDRESS} | ${WEBSITE}`, { x: 160, y: height - 125, size: 11, font: regularFont, color: DARK_NAVY });
+
+        const branchAddress = branch?.address || "A-9 Adarsh Nagar, Delhi 110033";
+        const branchContact = branch?.contact_number || "+91 7533042633";
+        const branchEmail = branch?.email || "info@rkinstitution.com";
+
+        page.drawText(branchAddress, { x: 160, y: height - 120, size: 10, font: regularFont, color: DARK_NAVY });
+        page.drawText(`Tel: ${branchContact} | Email: ${branchEmail}`, { x: 160, y: height - 135, size: 10, font: regularFont, color: DARK_NAVY });
 
         const title = "SALARY SLIP";
         const titleWidth = boldFont.widthOfTextAtSize(title, 20);
