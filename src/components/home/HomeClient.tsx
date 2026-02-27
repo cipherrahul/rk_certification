@@ -20,7 +20,8 @@ import {
     Globe
 } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import { AnimatePresence } from 'framer-motion';
 
 const StudentProfileCarousel = dynamic(() => import('@/components/home/StudentProfileCarousel').then(mod => mod.StudentProfileCarousel), {
     loading: () => <div className="h-96 flex items-center justify-center">Loading Success Stories...</div>,
@@ -43,6 +44,15 @@ const programs = [
     { slug: "full-stack-web", title: "Full Stack Development", students: "2.5k+", icon: Globe, highlight: "Tech Fast-Track" },
 ];
 
+const promotionalQuotes = [
+    "Empowering Careers.",
+    "Industry-Leading Mentorship.",
+    "Bridging the Skill Gap.",
+    "Real Projects, Real Growth.",
+    "Your Success, Our Mission.",
+    "Transforming Potential into Excellence."
+];
+
 export default function HomeClient() {
     const containerRef = useRef<HTMLDivElement>(null);
     const { scrollYProgress } = useScroll({
@@ -52,6 +62,15 @@ export default function HomeClient() {
 
     const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
     const textY = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+
+    const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentQuoteIndex((prev) => (prev + 1) % promotionalQuotes.length);
+        }, 3000);
+        return () => clearInterval(timer);
+    }, []);
 
     return (
         <div className="flex flex-col min-h-screen selection:bg-primary/20" ref={containerRef}>
@@ -87,9 +106,39 @@ export default function HomeClient() {
                     <h1
                         className="text-5xl md:text-8xl font-black tracking-tight text-white mb-8 leading-[1.1] relative z-10"
                     >
-                        Build Real <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">Skills.</span><br />
-                        Shape Your <span className="italic font-serif">Future.</span>
+                        <motion.span
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.8 }}
+                            className="inline-block"
+                        >
+                            Build Real <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">Skills.</span>
+                        </motion.span>
+                        <br />
+                        <motion.span
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.8, delay: 0.2 }}
+                            className="inline-block"
+                        >
+                            Shape Your <span className="italic font-serif">Future.</span>
+                        </motion.span>
                     </h1>
+
+                    <div className="h-12 md:h-16 mb-8 overflow-hidden relative">
+                        <AnimatePresence mode="wait">
+                            <motion.p
+                                key={currentQuoteIndex}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                                transition={{ duration: 0.5 }}
+                                className="text-xl md:text-2xl text-blue-400 font-medium tracking-wide"
+                            >
+                                {promotionalQuotes[currentQuoteIndex]}
+                            </motion.p>
+                        </AnimatePresence>
+                    </div>
 
                     <p
                         className="mt-6 text-xl text-slate-300 max-w-3xl mx-auto mb-12 leading-relaxed font-light relative z-10"
