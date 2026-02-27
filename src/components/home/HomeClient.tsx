@@ -19,7 +19,7 @@ import {
     Star,
     Globe
 } from 'lucide-react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, useSpring, useInView } from 'framer-motion';
 import { useRef, useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 
@@ -29,11 +29,38 @@ const StudentProfileCarousel = dynamic(() => import('@/components/home/StudentPr
 });
 
 const stats = [
-    { label: "Total Students", value: "5,000+", icon: Users, color: "text-blue-600" },
-    { label: "Branch Network", value: "5+", icon: Building2, color: "text-purple-600" },
-    { label: "Success Rate", value: "98%", icon: TrendingUp, color: "text-emerald-600" },
-    { label: "Career Placements", value: "2,000+", icon: Award, color: "text-amber-600" },
+    { label: "Total Students", value: 5000, suffix: "+", icon: Users, color: "text-blue-600" },
+    { label: "Branch Network", value: 5, suffix: "+", icon: Building2, color: "text-purple-600" },
+    { label: "Success Rate", value: 98, suffix: "%", icon: TrendingUp, color: "text-emerald-600" },
+    { label: "Career Placements", value: 2000, suffix: "+", icon: Award, color: "text-amber-600" },
 ];
+
+function Counter({ value, suffix }: { value: number; suffix: string }) {
+    const ref = useRef(null);
+    const isInView = useInView(ref, { once: true, margin: "-100px" });
+    const count = useSpring(0, {
+        stiffness: 100,
+        damping: 30,
+        restDelta: 0.001
+    });
+
+    const rounded = useTransform(count, (latest) => {
+        return Math.floor(latest).toLocaleString();
+    });
+
+    useEffect(() => {
+        if (isInView) {
+            count.set(value);
+        }
+    }, [isInView, value, count]);
+
+    return (
+        <span ref={ref}>
+            <motion.span>{rounded}</motion.span>
+            {suffix}
+        </span>
+    );
+}
 
 const programs = [
     { slug: "jee-ultimate", title: "JEE Preparation", students: "2.1k+", icon: Star, highlight: "Top Results" },
@@ -195,7 +222,9 @@ export default function HomeClient() {
                                 <div className={`p-4 rounded-3xl bg-slate-50 dark:bg-slate-900 mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}>
                                     <stat.icon className={`h-8 w-8 ${stat.color}`} />
                                 </div>
-                                <div className="text-3xl md:text-4xl font-black mb-2 text-slate-900 dark:text-white tracking-tight">{stat.value}</div>
+                                <div className="text-3xl md:text-4xl font-black mb-2 text-slate-900 dark:text-white tracking-tight">
+                                    <Counter value={stat.value} suffix={stat.suffix} />
+                                </div>
                                 <p className="text-slate-500 font-medium uppercase tracking-widest text-xs">{stat.label}</p>
                             </motion.div>
                         ))}

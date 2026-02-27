@@ -145,25 +145,25 @@ export default function ProgramDetailClient({ program }: { program: Program }) {
 
                         <div className="space-y-8">
                             <Card className="glass border-white/5 p-8 rounded-3xl">
-                                <h4 className="text-xl font-bold mb-6 flex items-center gap-2">
-                                    <SparkleIcon className="h-5 w-5 text-blue-500" /> Key Highlights
+                                <h4 className="text-xl font-black mb-6 flex items-center gap-2 text-blue-400">
+                                    <SparkleIcon className="h-5 w-5 text-blue-400" /> Key Highlights
                                 </h4>
                                 <div className="space-y-4">
                                     {program.features.map((feature, i) => (
                                         <div key={i} className="flex gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 group hover:border-blue-500/30 transition-colors">
-                                            <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
-                                            <p className="text-sm font-medium text-slate-300">{feature}</p>
+                                            <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+                                            <p className="text-sm font-semibold text-white">{feature}</p>
                                         </div>
                                     ))}
                                 </div>
                             </Card>
 
-                            <Card className="glass border-white/5 p-8 rounded-3xl bg-blue-600/20 border-blue-500/20">
-                                <h4 className="text-xl font-bold mb-4">Learning Outcomes</h4>
+                            <Card className="glass border-blue-500/20 p-8 rounded-3xl bg-blue-600/10 border border-blue-500/30 shadow-[0_0_30px_rgba(37,99,235,0.1)]">
+                                <h4 className="text-xl font-black mb-4 text-blue-400">Learning Outcomes</h4>
                                 <div className="space-y-3">
                                     {program.outcomes.map((outcome, i) => (
-                                        <div key={i} className="flex items-center gap-3 text-sm font-medium text-slate-200">
-                                            <div className="h-1.5 w-1.5 rounded-full bg-blue-400" />
+                                        <div key={i} className="flex items-center gap-3 text-sm font-semibold text-slate-100">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
                                             {outcome}
                                         </div>
                                     ))}
