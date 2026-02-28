@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GraduationCap, LayoutDashboard, FileBadge, Users, UserCog, LogOut, ChevronDown, FileText, Building, Briefcase, DollarSign, BookOpen, CalendarDays, Video, Library, ClipboardList, Target, MessageCircle } from "lucide-react";
+import { GraduationCap, LayoutDashboard, FileBadge, Users, UserCog, LogOut, ChevronDown, FileText, Building, Briefcase, DollarSign, BookOpen, CalendarDays, Video, Library, ClipboardList, Target, MessageCircle, MessagesSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -21,6 +21,7 @@ const navItems = [
     { name: "Assignments", href: "/admin/learning/assignments", icon: ClipboardList },
     { name: "Online Tests", href: "/admin/learning/tests", icon: Target },
     { name: "Support Chat", href: "/admin/support", icon: MessageCircle },
+    { name: "Teacher Messages", href: "/admin/teacher-support", icon: MessagesSquare },
 ];
 
 interface AdminSidebarProps {

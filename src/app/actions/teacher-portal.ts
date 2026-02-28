@@ -209,3 +209,83 @@ export async function getPublicTeachers() {
     if (error) throw error
     return data
 }
+
+// ------------------------------------------------------------------
+// Internal: Admin-Teacher Chat
+// ------------------------------------------------------------------
+
+export async function getOrCreateTeacherAdminThread(teacherId: string, subject: string = 'Institutional Talk') {
+    const supabase = await getSupabase()
+
+    // Check if an open thread already exists for this teacher
+    let { data: thread } = await supabase
+        .from('teacher_admin_threads')
+        .select('*')
+        .eq('teacher_id', teacherId)
+        .eq('status', 'Open')
+        .single()
+
+    if (thread) return thread
+
+    // If not, create a new one
+    const { data: newThread, error } = await supabase
+        .from('teacher_admin_threads')
+        .insert([{ teacher_id: teacherId, subject }])
+        .select()
+        .single()
+
+    if (error) throw error
+    return newThread
+}
+
+export async function getTeacherAdminMessages(threadId: string) {
+    const supabase = await getSupabase()
+    const { data, error } = await supabase
+        .from('teacher_admin_messages')
+        .select('*')
+        .eq('thread_id', threadId)
+        .order('created_at', { ascending: true })
+    if (error) throw error
+    return data
+}
+
+export async function sendTeacherAdminMessage(threadId: string, senderRole: 'teacher' | 'admin', message: string) {
+    const supabase = await getSupabase()
+
+    // Add the message
+    const { data: msg, error } = await supabase
+        .from('teacher_admin_messages')
+        .insert([{ thread_id: threadId, sender_role: senderRole, message }])
+        .select()
+        .single()
+
+    if (error) throw error
+
+    // Update the thread's updated_at timestamp
+    await supabase
+        .from('teacher_admin_threads')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', threadId)
+
+    return msg
+}
+
+export async function getAllTeacherAdminThreads() {
+    const supabase = await getSupabase()
+    const { data, error } = await supabase
+        .from('teacher_admin_threads')
+        .select('*, teachers(name, teacher_id, department, photo_url)')
+        .order('updated_at', { ascending: false })
+    if (error) throw error
+    return data
+}
+
+export async function updateTeacherAdminThreadStatus(threadId: string, status: 'Open' | 'Resolved') {
+    const supabase = await getSupabase()
+    const { error } = await supabase
+        .from('teacher_admin_threads')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', threadId)
+    if (error) throw error
+    return { success: true }
+}
