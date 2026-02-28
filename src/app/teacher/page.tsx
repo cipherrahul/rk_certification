@@ -23,7 +23,8 @@ import {
     createTeacherAssignment, getTeacherAssignments, deleteTeacherAssignment,
     createTeacherLiveClass, getTeacherLiveClasses, deleteTeacherLiveClass,
     getOrCreateTeacherAdminThread, getTeacherAdminMessages, sendTeacherAdminMessage,
-    getTeacherSalaryRecords
+    getTeacherSalaryRecords,
+    getStudentsInTeacherClass, getOrCreateTeacherStudentThread, getTeacherStudentMessages, sendTeacherStudentMessage
 } from "@/app/actions/teacher-portal";
 
 interface Teacher {
@@ -123,6 +124,16 @@ export default function TeacherPortal() {
     const [isSendingMsg, setIsSendingMsg] = useState(false);
     const [isLoadingChat, setIsLoadingChat] = useState(false);
 
+    // Student Chat
+    const [students, setStudents] = useState<any[]>([]);
+    const [selectedStudent, setSelectedStudent] = useState<any>(null);
+    const [studentChatThread, setStudentChatThread] = useState<any>(null);
+    const [studentChatMessages, setStudentChatMessages] = useState<any[]>([]);
+    const [studentChatInput, setStudentChatInput] = useState("");
+    const [isSendingStudentMsg, setIsSendingStudentMsg] = useState(false);
+    const [isLoadingStudentChat, setIsLoadingStudentChat] = useState(false);
+    const [isLoadingStudents, setIsLoadingStudents] = useState(false);
+
     const fetchData = useCallback(async () => {
         if (!teacher) return;
         setIsLoadingData(true);
@@ -137,6 +148,13 @@ export default function TeacherPortal() {
             setAssignments(astRes || []);
             setLiveClasses(lcRes || []);
             setSalaryRecords(salRes || []);
+
+            if (teacher.assigned_class) {
+                setIsLoadingStudents(true);
+                const stds = await getStudentsInTeacherClass(teacher.assigned_class);
+                setStudents(stds || []);
+                setIsLoadingStudents(false);
+            }
         } catch (e) { console.error(e); }
         setIsLoadingData(false);
     }, [teacher]);
@@ -261,6 +279,35 @@ export default function TeacherPortal() {
         setIsSendingMsg(false);
     };
 
+    const loadStudentChat = async (studentId: string) => {
+        if (!teacher) return;
+        setIsLoadingStudentChat(true);
+        try {
+            const thread = await getOrCreateTeacherStudentThread(teacher.id, studentId);
+            setStudentChatThread(thread);
+            const msgs = await getTeacherStudentMessages(thread.id);
+            setStudentChatMessages(msgs || []);
+        } catch (e) { console.error(e); }
+        setIsLoadingStudentChat(false);
+    };
+
+    const handleSendStudentMessage = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!studentChatInput.trim() || !studentChatThread || isSendingStudentMsg) return;
+        setIsSendingStudentMsg(true);
+        const msg = studentChatInput;
+        setStudentChatInput("");
+        try {
+            await sendTeacherStudentMessage(studentChatThread.id, 'teacher', msg);
+            const msgs = await getTeacherStudentMessages(studentChatThread.id);
+            setStudentChatMessages(msgs || []);
+        } catch (e: any) {
+            toast({ title: "Error sending message", description: e.message, variant: "destructive" });
+            setStudentChatInput(msg);
+        }
+        setIsSendingStudentMsg(false);
+    };
+
     const handleDownloadIDCard = async () => {
         if (!cardRef.current || !teacher) return;
         setIsDownloading("idcard");
@@ -340,6 +387,7 @@ export default function TeacherPortal() {
         { id: "materials", icon: Library, label: "Materials" },
         { id: "assignments", icon: ClipboardList, label: "Assignments" },
         { id: "live", icon: Video, label: "Live Classes" },
+        { id: "student-chat", icon: Target, label: "Student Chat" },
         { id: "downloads", icon: Download, label: "Downloads" },
         { id: "chat", icon: MessageCircle, label: "Admin Chat" },
     ];
@@ -716,79 +764,117 @@ export default function TeacherPortal() {
                     </div>
                 )}
 
-                {/* ── Admin Chat ── */}
-                {!isLoadingData && activeTab === "chat" && (
-                    <div className="flex flex-col h-[calc(100vh-140px)] max-h-[800px]">
-                        <div className="flex items-center justify-between mb-4 pb-4 border-b">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center">
-                                    <MessageCircle className="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <h2 className="font-bold text-slate-900">Admin Chat</h2>
-                                    <p className="text-xs text-slate-500">Internal communication with institutional administrators</p>
-                                </div>
-                            </div>
-                            <Button variant="ghost" size="sm" onClick={loadChat} disabled={isLoadingChat}>
-                                <RefreshCw className={`w-4 h-4 ${isLoadingChat ? 'animate-spin' : ''}`} />
-                            </Button>
-                        </div>
-
-                        <div className="flex-1 bg-white rounded-2xl border shadow-sm flex flex-col overflow-hidden">
-                            {/* Messages area */}
-                            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                                {isLoadingChat ? (
-                                    <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 animate-spin text-slate-300" /></div>
-                                ) : chatMessages.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-2">
-                                        <MessageCircle className="w-12 h-12 opacity-20" />
-                                        <p className="text-sm font-medium">No institutional messages yet.</p>
-                                        <p className="text-xs">Start a conversation with admin regarding academic or administrative matters.</p>
-                                    </div>
+                {/* ── Student Chat ── */}
+                {!isLoadingData && activeTab === "student-chat" && (
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 h-[calc(100vh-140px)] max-h-[800px]">
+                        <Card className="md:col-span-1 overflow-hidden flex flex-col">
+                            <CardHeader className="p-4 border-b">
+                                <CardTitle className="text-sm font-bold uppercase tracking-wider text-slate-500">Students ({students.length})</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-0 flex-1 overflow-y-auto">
+                                {isLoadingStudents ? (
+                                    <div className="p-8 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-slate-300" /></div>
                                 ) : (
-                                    chatMessages.map(m => (
-                                        <div key={m.id} className={`flex ${m.sender_role === 'teacher' ? 'justify-end' : 'justify-start'}`}>
-                                            <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm ${m.sender_role === 'teacher'
-                                                ? 'bg-indigo-600 text-white rounded-tr-none'
-                                                : 'bg-slate-100 text-slate-800 rounded-tl-none'
-                                                }`}>
-                                                <div className="font-bold text-[10px] uppercase opacity-70 mb-1">
-                                                    {m.sender_role === 'teacher' ? 'You' : 'Admin'}
+                                    <div className="divide-y">
+                                        {students.map(s => (
+                                            <button
+                                                key={s.id}
+                                                onClick={() => {
+                                                    setSelectedStudent(s);
+                                                    loadStudentChat(s.id);
+                                                }}
+                                                className={`w-full p-4 flex items-center gap-3 transition-colors text-left ${selectedStudent?.id === s.id ? 'bg-indigo-50 border-r-2 border-indigo-600' : 'hover:bg-slate-50'}`}
+                                            >
+                                                {s.photo_url ? (
+                                                    <img src={s.photo_url} alt={s.first_name} className="w-10 h-10 rounded-full object-cover shrink-0" />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0 uppercase font-bold text-slate-400 text-xs">{s.first_name[0]}</div>
+                                                )}
+                                                <div className="min-w-0">
+                                                    <div className="font-bold text-sm text-slate-900 truncate">{s.first_name} {s.last_name}</div>
+                                                    <div className="text-[10px] text-slate-500 font-mono truncate">{s.student_id}</div>
                                                 </div>
-                                                <div className="leading-relaxed whitespace-pre-wrap">{m.message}</div>
-                                                <div className="text-[9px] mt-1 opacity-50 text-right">
-                                                    {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </div>
+                                            </button>
+                                        ))}
+                                        {students.length === 0 && <p className="p-8 text-center text-xs text-slate-400">No students found in your class.</p>}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <div className="md:col-span-3 flex flex-col bg-white rounded-2xl border shadow-sm overflow-hidden">
+                            {!selectedStudent ? (
+                                <div className="flex-1 flex flex-col items-center justify-center p-12 text-slate-400 text-center">
+                                    <MessageCircle className="w-16 h-16 opacity-10 mb-4" />
+                                    <h3 className="font-bold text-lg text-slate-600">Start a Conversation</h3>
+                                    <p className="max-w-xs text-sm">Select a student from the list to start chatting about academic performance or queries.</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="p-4 border-b flex items-center justify-between bg-slate-50/50">
+                                        <div className="flex items-center gap-3">
+                                            {selectedStudent.photo_url ? (
+                                                <img src={selectedStudent.photo_url} alt={selectedStudent.first_name} className="w-8 h-8 rounded-full object-cover" />
+                                            ) : (
+                                                <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs">{selectedStudent.first_name[0]}</div>
+                                            )}
+                                            <div>
+                                                <div className="font-bold text-slate-900 text-sm">{selectedStudent.first_name} {selectedStudent.last_name}</div>
+                                                <div className="text-[10px] text-slate-500 uppercase font-black">{selectedStudent.course}</div>
                                             </div>
                                         </div>
-                                    ))
-                                )}
-                            </div>
+                                        <Button variant="ghost" size="sm" onClick={() => loadStudentChat(selectedStudent.id)} disabled={isLoadingStudentChat}>
+                                            <RefreshCw className={`w-3 h-3 ${isLoadingStudentChat ? 'animate-spin' : ''}`} />
+                                        </Button>
+                                    </div>
 
-                            {/* Input area */}
-                            <div className="p-4 bg-slate-50 border-t">
-                                <form onSubmit={handleSendMessage} className="relative flex items-center gap-2">
-                                    <Input
-                                        className="h-12 bg-white border-slate-200 text-slate-900 rounded-xl pr-14"
-                                        placeholder="Type your message to admin..."
-                                        value={chatInput}
-                                        onChange={e => setChatInput(e.target.value)}
-                                        disabled={isSendingMsg || !chatThread}
-                                    />
-                                    <Button
-                                        size="icon"
-                                        className="absolute right-1.5 h-9 w-9 bg-indigo-600 hover:bg-indigo-700 rounded-lg"
-                                        type="submit"
-                                        disabled={isSendingMsg || !chatInput.trim() || !chatThread}
-                                    >
-                                        {isSendingMsg ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                                    </Button>
-                                </form>
-                                <p className="text-[10px] text-slate-400 mt-2 text-center uppercase tracking-wider font-bold">Press Enter to Send</p>
-                            </div>
+                                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                                        {isLoadingStudentChat && studentChatMessages.length === 0 ? (
+                                            <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 animate-spin text-slate-200" /></div>
+                                        ) : (
+                                            studentChatMessages.map(m => (
+                                                <div key={m.id} className={`flex ${m.sender_role === 'teacher' ? 'justify-end' : 'justify-start'}`}>
+                                                    <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm ${m.sender_role === 'teacher' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-slate-100 text-slate-800 rounded-tl-none'}`}>
+                                                        <div className="font-bold text-[9px] uppercase opacity-70 mb-1">{m.sender_role === 'teacher' ? 'You' : selectedStudent.first_name}</div>
+                                                        <div className="whitespace-pre-wrap leading-relaxed">{m.message}</div>
+                                                        <div className="text-[9px] mt-1 opacity-50 text-right">{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                        {studentChatMessages.length === 0 && !isLoadingStudentChat && (
+                                            <div className="h-full flex flex-col items-center justify-center text-slate-400 opacity-40">
+                                                <MessageCircle className="w-12 h-12 mb-2" />
+                                                <p className="text-xs">No messages yet with this student.</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="p-4 bg-slate-50 border-t">
+                                        <form onSubmit={handleSendStudentMessage} className="relative flex items-center gap-2">
+                                            <Input
+                                                className="h-11 bg-white border-slate-200 text-slate-900 rounded-xl pr-12 text-sm"
+                                                placeholder={`Send message to ${selectedStudent.first_name}...`}
+                                                value={studentChatInput}
+                                                onChange={e => setStudentChatInput(e.target.value)}
+                                                disabled={isSendingStudentMsg}
+                                            />
+                                            <Button
+                                                size="icon"
+                                                className="absolute right-1.5 h-8 w-8 bg-indigo-600 hover:bg-indigo-700 rounded-lg"
+                                                type="submit"
+                                                disabled={isSendingStudentMsg || !studentChatInput.trim()}
+                                            >
+                                                {isSendingStudentMsg ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                                            </Button>
+                                        </form>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 )}
+
             </main>
         </div>
     );

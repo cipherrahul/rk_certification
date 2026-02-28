@@ -306,3 +306,71 @@ export async function updateTeacherAdminThreadStatus(threadId: string, status: '
     if (error) throw error
     return { success: true }
 }
+// ------------------------------------------------------------------
+// Internal: Teacher-Student Chat
+// ------------------------------------------------------------------
+
+export async function getOrCreateTeacherStudentThread(teacherId: string, studentId: string, subject: string = 'Academic Query') {
+    const supabase = await getSupabase()
+
+    let { data: thread } = await supabase
+        .from('teacher_student_threads')
+        .select('*')
+        .eq('teacher_id', teacherId)
+        .eq('student_id', studentId)
+        .eq('status', 'Open')
+        .single()
+
+    if (thread) return thread
+
+    const { data: newThread, error } = await supabase
+        .from('teacher_student_threads')
+        .insert([{ teacher_id: teacherId, student_id: studentId, subject }])
+        .select()
+        .single()
+
+    if (error) throw error
+    return newThread
+}
+
+export async function getTeacherStudentMessages(threadId: string) {
+    const supabase = await getSupabase()
+    const { data, error } = await supabase
+        .from('teacher_student_messages')
+        .select('*')
+        .eq('thread_id', threadId)
+        .order('created_at', { ascending: true })
+    if (error) throw error
+    return data
+}
+
+export async function sendTeacherStudentMessage(threadId: string, senderRole: 'teacher' | 'student', message: string) {
+    const supabase = await getSupabase()
+
+    const { data: msg, error } = await supabase
+        .from('teacher_student_messages')
+        .insert([{ thread_id: threadId, sender_role: senderRole, message }])
+        .select()
+        .single()
+
+    if (error) throw error
+
+    await supabase
+        .from('teacher_student_threads')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', threadId)
+
+    return msg
+}
+
+export async function getStudentsInTeacherClass(className: string) {
+    const supabase = await getSupabase()
+    const { data, error } = await supabase
+        .from('students')
+        .select('id, first_name, last_name, student_id, photo_url, course')
+        .ilike('course', className)
+        .order('first_name', { ascending: true })
+
+    if (error) throw error
+    return data
+}

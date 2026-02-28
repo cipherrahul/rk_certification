@@ -368,3 +368,18 @@ export async function updateSupportThreadStatus(threadId: string, status: 'Open'
     if (error) throw error
     return { success: true }
 }
+// ------------------------------------------------------------------
+// Teacher-Student Chat Helpers (Student Side)
+// ------------------------------------------------------------------
+
+export async function getTeachersForStudent(courseName: string) {
+    const supabase = await getSupabase()
+    const { data, error } = await supabase
+        .from('teachers')
+        .select('id, name, subject, photo_url')
+        .ilike('assigned_class', courseName)
+        .order('name', { ascending: true })
+
+    if (error) throw error
+    return data
+}

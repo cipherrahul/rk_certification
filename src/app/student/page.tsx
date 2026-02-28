@@ -19,9 +19,13 @@ import {
     loginStudent, logoutStudent, getStudentSession,
     getLiveClasses, getStudyMaterials, getAssignments, getOnlineTests,
     getOrCreateSupportThread, getSupportMessages, sendSupportMessage,
-    getStudentFeePayments
+    getStudentFeePayments,
+    getTeachersForStudent
 } from "@/app/actions/learning";
-import { getTeacherMaterials, getTeacherAssignments, getTeacherLiveClasses } from "@/app/actions/teacher-portal";
+import {
+    getTeacherMaterials, getTeacherAssignments, getTeacherLiveClasses,
+    getOrCreateTeacherStudentThread, getTeacherStudentMessages, sendTeacherStudentMessage
+} from "@/app/actions/teacher-portal";
 
 export default function StudentPortal() {
     const { toast } = useToast();
@@ -57,6 +61,16 @@ export default function StudentPortal() {
     const [classMaterials, setClassMaterials] = useState<any[]>([]);
     const [classAssignments, setClassAssignments] = useState<any[]>([]);
     const [classLiveClasses, setClassLiveClasses] = useState<any[]>([]);
+
+    // Teacher Chat State
+    const [teachers, setTeachers] = useState<any[]>([]);
+    const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
+    const [teacherChatThread, setTeacherChatThread] = useState<any>(null);
+    const [teacherChatMessages, setTeacherChatMessages] = useState<any[]>([]);
+    const [teacherChatInput, setTeacherChatInput] = useState("");
+    const [isSendingTeacherMsg, setIsSendingTeacherMsg] = useState(false);
+    const [isLoadingTeachers, setIsLoadingTeachers] = useState(false);
+    const [isLoadingTeacherChat, setIsLoadingTeacherChat] = useState(false);
 
     // Initialization: check session
     useEffect(() => {
@@ -106,6 +120,11 @@ export default function StudentPortal() {
                         setClassMaterials(tMat || []);
                         setClassAssignments(tAst || []);
                         setClassLiveClasses(tLc || []);
+
+                        setIsLoadingTeachers(true);
+                        const tchrs = await getTeachersForStudent(studentClass);
+                        setTeachers(tchrs || []);
+                        setIsLoadingTeachers(false);
                     }
                 } catch (error) {
                     console.error(error);
@@ -166,6 +185,35 @@ export default function StudentPortal() {
             setNewMessage(tempMsg);
         }
         setIsSendingMessage(false);
+    };
+
+    const loadTeacherChat = async (teacherId: string) => {
+        if (!student) return;
+        setIsLoadingTeacherChat(true);
+        try {
+            const thread = await getOrCreateTeacherStudentThread(teacherId, student.id);
+            setTeacherChatThread(thread);
+            const msgs = await getTeacherStudentMessages(thread.id);
+            setTeacherChatMessages(msgs || []);
+        } catch (e) { console.error(e); }
+        setIsLoadingTeacherChat(false);
+    };
+
+    const handleSendTeacherMessage = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!teacherChatInput.trim() || !teacherChatThread || isSendingTeacherMsg) return;
+        setIsSendingTeacherMsg(true);
+        const msg = teacherChatInput;
+        setTeacherChatInput("");
+        try {
+            await sendTeacherStudentMessage(teacherChatThread.id, 'student', msg);
+            const msgs = await getTeacherStudentMessages(teacherChatThread.id);
+            setTeacherChatMessages(msgs || []);
+        } catch (e: any) {
+            toast({ title: "Error sending message", description: e.message, variant: "destructive" });
+            setTeacherChatInput(msg);
+        }
+        setIsSendingTeacherMsg(false);
     };
 
     const handleDownloadIDCard = async () => {
@@ -292,8 +340,10 @@ export default function StudentPortal() {
                         { id: "assignments", icon: ClipboardList, label: "Assignments" },
                         { id: "tests", icon: Target, label: "Online Tests" },
                         { id: "class", icon: BookOpen, label: "My Class Content" },
+                        { id: "teacher-chat", icon: MessageCircle, label: "Teacher Chat" },
+                        { id: "fees", icon: Clock, label: "Fee Status" },
                         { id: "downloads", icon: Download, label: "Downloads" },
-                        { id: "support", icon: MessageCircle, label: "Support / Chat" },
+                        { id: "support", icon: RefreshCw, label: "Support Chat" },
                     ].map(tab => (
                         <button
                             key={tab.id}
@@ -695,6 +745,116 @@ export default function StudentPortal() {
                                     </CardContent>
                                 </Card>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {!isLoadingData && activeTab === "teacher-chat" && (
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 h-[calc(100vh-140px)] max-h-[800px]">
+                        <Card className="md:col-span-1 overflow-hidden flex flex-col">
+                            <CardHeader className="p-4 border-b">
+                                <CardTitle className="text-sm font-bold uppercase tracking-wider text-slate-500">Your Teachers ({teachers.length})</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-0 flex-1 overflow-y-auto">
+                                {isLoadingTeachers ? (
+                                    <div className="p-8 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-slate-300" /></div>
+                                ) : (
+                                    <div className="divide-y">
+                                        {teachers.map(t => (
+                                            <button
+                                                key={t.id}
+                                                onClick={() => {
+                                                    setSelectedTeacher(t);
+                                                    loadTeacherChat(t.id);
+                                                }}
+                                                className={`w-full p-4 flex items-center gap-3 transition-colors text-left ${selectedTeacher?.id === t.id ? 'bg-indigo-50 border-r-2 border-indigo-600' : 'hover:bg-slate-50'}`}
+                                            >
+                                                {t.photo_url ? (
+                                                    <img src={t.photo_url} alt={t.name} className="w-10 h-10 rounded-full object-cover shrink-0" />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0 uppercase font-bold text-slate-400 text-xs">{t.name[0]}</div>
+                                                )}
+                                                <div className="min-w-0">
+                                                    <div className="font-bold text-sm text-slate-900 truncate">{t.name}</div>
+                                                    <div className="text-[10px] text-slate-500 font-medium truncate">{t.subject}</div>
+                                                </div>
+                                            </button>
+                                        ))}
+                                        {teachers.length === 0 && <p className="p-8 text-center text-xs text-slate-400">No teachers assigned to your course.</p>}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <div className="md:col-span-3 flex flex-col bg-white rounded-2xl border shadow-sm overflow-hidden">
+                            {!selectedTeacher ? (
+                                <div className="flex-1 flex flex-col items-center justify-center p-12 text-slate-400 text-center">
+                                    <MessageCircle className="w-16 h-16 opacity-10 mb-4" />
+                                    <h3 className="font-bold text-lg text-slate-600">Ask Your Doubt</h3>
+                                    <p className="max-w-xs text-sm">Select a teacher from the list to start chatting and clear your academic doubts directly.</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="p-4 border-b flex items-center justify-between bg-slate-50/50">
+                                        <div className="flex items-center gap-3">
+                                            {selectedTeacher.photo_url ? (
+                                                <img src={selectedTeacher.photo_url} alt={selectedTeacher.name} className="w-8 h-8 rounded-full object-cover" />
+                                            ) : (
+                                                <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs">{selectedTeacher.name[0]}</div>
+                                            )}
+                                            <div>
+                                                <div className="font-bold text-slate-900 text-sm">{selectedTeacher.name}</div>
+                                                <div className="text-[10px] text-slate-500 uppercase font-black">{selectedTeacher.subject}</div>
+                                            </div>
+                                        </div>
+                                        <Button variant="ghost" size="sm" onClick={() => loadTeacherChat(selectedTeacher.id)} disabled={isLoadingTeacherChat}>
+                                            <RefreshCw className={`w-3 h-3 ${isLoadingTeacherChat ? 'animate-spin' : ''}`} />
+                                        </Button>
+                                    </div>
+
+                                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                                        {isLoadingTeacherChat && teacherChatMessages.length === 0 ? (
+                                            <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 animate-spin text-slate-200" /></div>
+                                        ) : (
+                                            teacherChatMessages.map(m => (
+                                                <div key={m.id} className={`flex ${m.sender_role === 'student' ? 'justify-end' : 'justify-start'}`}>
+                                                    <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm ${m.sender_role === 'student' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-slate-100 text-slate-800 rounded-tl-none'}`}>
+                                                        <div className="font-bold text-[9px] uppercase opacity-70 mb-1">{m.sender_role === 'student' ? 'You' : selectedTeacher.name}</div>
+                                                        <div className="whitespace-pre-wrap leading-relaxed">{m.message}</div>
+                                                        <div className="text-[9px] mt-1 opacity-50 text-right">{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                        {teacherChatMessages.length === 0 && !isLoadingTeacherChat && (
+                                            <div className="h-full flex flex-col items-center justify-center text-slate-400 opacity-40">
+                                                <MessageCircle className="w-12 h-12 mb-2" />
+                                                <p className="text-xs">No messages yet with this teacher.</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="p-4 bg-slate-50 border-t">
+                                        <form onSubmit={handleSendTeacherMessage} className="relative flex items-center gap-2">
+                                            <Input
+                                                className="h-11 bg-white border-slate-200 text-slate-900 rounded-xl pr-12 text-sm"
+                                                placeholder={`Ask a doubt to ${selectedTeacher.name}...`}
+                                                value={teacherChatInput}
+                                                onChange={e => setTeacherChatInput(e.target.value)}
+                                                disabled={isSendingTeacherMsg}
+                                            />
+                                            <Button
+                                                size="icon"
+                                                className="absolute right-1.5 h-8 w-8 bg-indigo-600 hover:bg-indigo-700 rounded-lg"
+                                                type="submit"
+                                                disabled={isSendingTeacherMsg || !teacherChatInput.trim()}
+                                            >
+                                                {isSendingTeacherMsg ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                                            </Button>
+                                        </form>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 )}
