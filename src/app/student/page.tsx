@@ -883,6 +883,97 @@ export default function StudentPortal() {
                     </div>
                 )}
 
+                {!isLoadingData && activeTab === "fees" && (
+                    <div className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {/* Summary Cards */}
+                            <Card className="bg-indigo-600 text-white border-0 shadow-lg">
+                                <CardContent className="p-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="p-2 bg-indigo-500 rounded-lg">
+                                            <Library className="w-5 h-5" />
+                                        </div>
+                                        <Badge className="bg-indigo-500 text-white border-0">Total Course Fee</Badge>
+                                    </div>
+                                    <div className="text-3xl font-black italic">₹{Number(feePayments[0]?.total_fees || 0).toLocaleString('en-IN')}</div>
+                                    <p className="text-indigo-100 text-xs mt-2 font-medium">As per admission records</p>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="bg-emerald-600 text-white border-0 shadow-lg">
+                                <CardContent className="p-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="p-2 bg-emerald-500 rounded-lg">
+                                            <Target className="w-5 h-5" />
+                                        </div>
+                                        <Badge className="bg-emerald-500 text-white border-0">Total Amount Paid</Badge>
+                                    </div>
+                                    <div className="text-3xl font-black italic">
+                                        ₹{feePayments.reduce((acc, curr) => acc + Number(curr.paid_amount), 0).toLocaleString('en-IN')}
+                                    </div>
+                                    <p className="text-emerald-100 text-xs mt-2 font-medium">Across all installments</p>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="bg-rose-600 text-white border-0 shadow-lg">
+                                <CardContent className="p-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="p-2 bg-rose-500 rounded-lg">
+                                            <Clock className="w-5 h-5" />
+                                        </div>
+                                        <Badge className="bg-rose-500 text-white border-0">Current Balance</Badge>
+                                    </div>
+                                    <div className="text-3xl font-black italic">
+                                        ₹{Number(feePayments[0]?.remaining_amount || 0).toLocaleString('en-IN')}
+                                    </div>
+                                    <p className="text-rose-100 text-xs mt-2 font-medium">Due for upcoming sessions</p>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        <Card className="shadow-sm border-0 bg-white overflow-hidden">
+                            <CardHeader className="border-b bg-slate-50/50">
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <FileText className="w-5 h-5 text-indigo-500" />
+                                    Fee Payment History
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                {feePayments.length === 0 ? (
+                                    <div className="p-12 text-center text-slate-400">No payment records found.</div>
+                                ) : (
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="hover:bg-transparent">
+                                                <TableHead className="pl-6 uppercase text-[10px] font-bold">Date</TableHead>
+                                                <TableHead className="uppercase text-[10px] font-bold">Month / Installment</TableHead>
+                                                <TableHead className="uppercase text-[10px] font-bold">Receipt No.</TableHead>
+                                                <TableHead className="uppercase text-[10px] font-bold">Mode</TableHead>
+                                                <TableHead className="uppercase text-[10px] font-bold">Amount Paid</TableHead>
+                                                <TableHead className="pr-6 text-right uppercase text-[10px] font-bold">Status</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {feePayments.map((payment) => (
+                                                <TableRow key={payment.id} className="hover:bg-slate-50/50">
+                                                    <TableCell className="pl-6 py-4 font-medium text-slate-600">{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
+                                                    <TableCell className="font-bold text-slate-900">{payment.month}</TableCell>
+                                                    <TableCell className="font-mono text-[10px] text-indigo-600 font-black uppercase tracking-widest">{payment.receipt_number}</TableCell>
+                                                    <TableCell><Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-500">{payment.payment_mode}</Badge></TableCell>
+                                                    <TableCell className="font-black text-slate-900">₹{Number(payment.paid_amount).toLocaleString('en-IN')}</TableCell>
+                                                    <TableCell className="pr-6 text-right">
+                                                        <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0 text-[10px] uppercase font-bold tracking-tighter">Verified / Paid</Badge>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
+
                 {activeTab === "support" && (
                     <div className="flex flex-col h-[calc(100vh-200px)] max-h-[700px]">
                         {/* Header */}
