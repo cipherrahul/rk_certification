@@ -53,15 +53,17 @@ export default function StudentPortal() {
 
     // Fetch data when student changes
     useEffect(() => {
-        if (student && student.course_id) {
+        if (student) {
             const fetchPortalData = async () => {
                 setIsLoadingData(true);
                 try {
+                    // Use course_id if available, otherwise load all and let students see everything
+                    const courseFilter = student.course_id || null;
                     const [liveRes, matRes, assignRes, testRes] = await Promise.all([
-                        getLiveClasses(student.course_id),
-                        getStudyMaterials(student.course_id),
-                        getAssignments(student.course_id),
-                        getOnlineTests(student.course_id)
+                        getLiveClasses(courseFilter),
+                        getStudyMaterials(courseFilter),
+                        getAssignments(courseFilter),
+                        getOnlineTests(courseFilter)
                     ]);
                     setLiveClasses(liveRes || []);
                     setMaterials(matRes || []);
@@ -188,8 +190,8 @@ export default function StudentPortal() {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`w-full flex items-center justify-between p-3 rounded-xl transition-all font-medium ${activeTab === tab.id
-                                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-900/20"
-                                    : "hover:bg-slate-800 text-slate-400 hover:text-white"
+                                ? "bg-indigo-600 text-white shadow-md shadow-indigo-900/20"
+                                : "hover:bg-slate-800 text-slate-400 hover:text-white"
                                 }`}
                         >
                             <div className="flex items-center gap-3">
