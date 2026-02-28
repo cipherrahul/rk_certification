@@ -274,6 +274,11 @@ export default function StudentPortal() {
                 </div>
 
                 <div className="p-6 border-b border-slate-800">
+                    {student.photo_url ? (
+                        <img src={student.photo_url} alt={student.first_name} className="w-14 h-14 rounded-full object-cover ring-2 ring-indigo-500/40 mb-3" />
+                    ) : (
+                        <div className="w-14 h-14 rounded-full bg-indigo-500/20 text-indigo-400 font-black text-xl flex items-center justify-center mb-3">{student.first_name[0]}</div>
+                    )}
                     <div className="font-bold text-white text-lg">{student.first_name} {student.last_name}</div>
                     <div className="text-sm font-mono text-indigo-400 mt-1">{student.student_id}</div>
                     <Badge variant="outline" className="mt-3 bg-slate-800 text-slate-300 border-slate-700">Course: {student.course || 'Unassigned'}</Badge>
