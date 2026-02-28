@@ -259,7 +259,7 @@ export async function getStudentSession() {
     const supabase = await getSupabase()
     const { data: student } = await supabase
         .from('students')
-        .select('id, student_id, first_name, last_name, father_name, mobile, course, academic_session, photo_url')
+        .select('id, student_id, first_name, last_name, father_name, mobile, course, academic_session, photo_url, is_restricted')
         .eq('id', sessionId)
         .single()
 

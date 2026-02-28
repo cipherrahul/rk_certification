@@ -365,12 +365,53 @@ export async function sendTeacherStudentMessage(threadId: string, senderRole: 't
 
 export async function getStudentsInTeacherClass(className: string) {
     const supabase = await getSupabase()
-    const { data, error } = await supabase
+
+    // Get students
+    const { data: students, error: studentError } = await supabase
         .from('students')
-        .select('id, first_name, last_name, student_id, photo_url, course')
+        .select('id, first_name, last_name, student_id, photo_url, course, is_restricted')
         .ilike('course', className)
         .order('first_name', { ascending: true })
 
+    if (studentError) throw studentError
+    if (!students || students.length === 0) return []
+
+    // Get latest fee payment for each student to determine status
+    const studentIds = students.map(s => s.id)
+    const { data: payments, error: paymentError } = await supabase
+        .from('fee_payments')
+        .select('student_id, remaining_amount, payment_date')
+        .in('student_id', studentIds)
+        .order('payment_date', { ascending: false })
+
+    if (paymentError) throw paymentError
+
+    // Map fee status to students
+    const studentsWithFee = students.map(student => {
+        const studentPayments = payments?.filter(p => p.student_id === student.id) || []
+        const latestPayment = studentPayments[0]
+
+        let feeStatus: 'Paid' | 'Pending' | 'No Record' = 'No Record'
+        if (latestPayment) {
+            feeStatus = Number(latestPayment.remaining_amount) <= 0 ? 'Paid' : 'Pending'
+        }
+
+        return {
+            ...student,
+            fee_status: feeStatus
+        }
+    })
+
+    return studentsWithFee
+}
+
+export async function toggleStudentRestriction(studentId: string, restricted: boolean) {
+    const supabase = await getSupabase()
+    const { error } = await supabase
+        .from('students')
+        .update({ is_restricted: restricted })
+        .eq('id', studentId)
+
     if (error) throw error
-    return data
+    return { success: true }
 }

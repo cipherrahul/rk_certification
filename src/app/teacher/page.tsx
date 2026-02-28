@@ -24,7 +24,8 @@ import {
     createTeacherLiveClass, getTeacherLiveClasses, deleteTeacherLiveClass,
     getOrCreateTeacherAdminThread, getTeacherAdminMessages, sendTeacherAdminMessage,
     getTeacherSalaryRecords,
-    getStudentsInTeacherClass, getOrCreateTeacherStudentThread, getTeacherStudentMessages, sendTeacherStudentMessage
+    getStudentsInTeacherClass, getOrCreateTeacherStudentThread, getTeacherStudentMessages, sendTeacherStudentMessage,
+    toggleStudentRestriction
 } from "@/app/actions/teacher-portal";
 
 interface Teacher {
@@ -133,6 +134,9 @@ export default function TeacherPortal() {
     const [isSendingStudentMsg, setIsSendingStudentMsg] = useState(false);
     const [isLoadingStudentChat, setIsLoadingStudentChat] = useState(false);
     const [isLoadingStudents, setIsLoadingStudents] = useState(false);
+    const [studentSearch, setStudentSearch] = useState("");
+    const [feeFilter, setFeeFilter] = useState("all");
+    const [isRestricting, setIsRestricting] = useState<string | null>(null);
 
     const fetchData = useCallback(async () => {
         if (!teacher) return;
@@ -384,12 +388,13 @@ export default function TeacherPortal() {
     // ── DASHBOARD ──────────────────────────────
     const tabs = [
         { id: "dashboard", icon: BookOpen, label: "Overview" },
-        { id: "materials", icon: Library, label: "Materials" },
+        { id: "materials", icon: Library, label: "Study Materials" },
         { id: "assignments", icon: ClipboardList, label: "Assignments" },
         { id: "live", icon: Video, label: "Live Classes" },
-        { id: "student-chat", icon: Target, label: "Student Chat" },
-        { id: "downloads", icon: Download, label: "Downloads" },
-        { id: "chat", icon: MessageCircle, label: "Admin Chat" },
+        { id: "students", icon: GraduationCap, label: "My Students" },
+        { id: "chat", icon: MessageCircle, label: "Student Chat" },
+        { id: "salary", icon: Calendar, label: "Salary Slips" },
+        { id: "admin-chat", icon: RefreshCw, label: "Admin Support" },
     ];
 
     const ClassInput = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
@@ -761,6 +766,108 @@ export default function TeacherPortal() {
                                 </Card>
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {!isLoadingData && activeTab === "students" && (
+                    <div className="space-y-6">
+                        <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+                            <div>
+                                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Student Directory</h2>
+                                <p className="text-slate-500 font-medium">Manage students assigned to <strong>{teacher.assigned_class}</strong></p>
+                            </div>
+                            <div className="flex gap-3 w-full md:w-auto">
+                                <div className="relative flex-1 md:w-64">
+                                    <Input
+                                        placeholder="Search by name or ID..."
+                                        className="pl-9 h-10 bg-white"
+                                        value={studentSearch}
+                                        onChange={e => setStudentSearch(e.target.value)}
+                                    />
+                                    <GraduationCap className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                                </div>
+                                <Select value={feeFilter} onValueChange={setFeeFilter}>
+                                    <SelectTrigger className="w-32 h-10 bg-white">
+                                        <SelectValue placeholder="Fee Status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All Fees</SelectItem>
+                                        <SelectItem value="Paid">Paid</SelectItem>
+                                        <SelectItem value="Pending">Pending</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        <Card className="border-0 shadow-sm overflow-hidden bg-white rounded-2xl">
+                            <Table>
+                                <TableHeader className="bg-slate-50/50">
+                                    <TableRow>
+                                        <TableHead className="w-[80px]">Photo</TableHead>
+                                        <TableHead>Student Name</TableHead>
+                                        <TableHead>Student ID</TableHead>
+                                        <TableHead>Fee Status</TableHead>
+                                        <TableHead className="text-right">Portal Access</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {isLoadingStudents ? (
+                                        <TableRow><TableCell colSpan={5} className="h-32 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-slate-300" /></TableCell></TableRow>
+                                    ) : students.filter(s => {
+                                        const matchesSearch = s.first_name.toLowerCase().includes(studentSearch.toLowerCase()) ||
+                                            s.last_name.toLowerCase().includes(studentSearch.toLowerCase()) ||
+                                            s.student_id.toLowerCase().includes(studentSearch.toLowerCase());
+                                        const matchesFee = feeFilter === 'all' || s.fee_status === feeFilter;
+                                        return matchesSearch && matchesFee;
+                                    }).length === 0 ? (
+                                        <TableRow><TableCell colSpan={5} className="h-32 text-center text-slate-400 font-medium">No students found matching filters.</TableCell></TableRow>
+                                    ) : students.filter(s => {
+                                        const matchesSearch = s.first_name.toLowerCase().includes(studentSearch.toLowerCase()) ||
+                                            s.last_name.toLowerCase().includes(studentSearch.toLowerCase()) ||
+                                            s.student_id.toLowerCase().includes(studentSearch.toLowerCase());
+                                        const matchesFee = feeFilter === 'all' || s.fee_status === feeFilter;
+                                        return matchesSearch && matchesFee;
+                                    }).map(s => (
+                                        <TableRow key={s.id} className="hover:bg-slate-50/50 transition-colors">
+                                            <TableCell>
+                                                {s.photo_url ? (
+                                                    <img src={s.photo_url} alt={s.first_name} className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm" />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-400 text-xs uppercase">{s.first_name[0]}</div>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="font-bold text-slate-900">{s.first_name} {s.last_name}</TableCell>
+                                            <TableCell className="font-mono text-[10px] text-indigo-600 font-bold uppercase tracking-wider">{s.student_id}</TableCell>
+                                            <TableCell>
+                                                <Badge className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border-0 shadow-none ${s.fee_status === 'Paid' ? 'bg-emerald-100 text-emerald-700' : s.fee_status === 'Pending' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                    {s.fee_status}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button
+                                                    variant={s.is_restricted ? "destructive" : "outline"}
+                                                    size="sm"
+                                                    className={`h-8 text-[10px] font-bold uppercase tracking-wider border-2 ${!s.is_restricted ? 'hover:bg-slate-50' : ''}`}
+                                                    disabled={isRestricting === s.id}
+                                                    onClick={async () => {
+                                                        setIsRestricting(s.id);
+                                                        try {
+                                                            await toggleStudentRestriction(s.id, !s.is_restricted);
+                                                            toast({ title: s.is_restricted ? "Access Restored" : "Access Restricted", description: `${s.first_name}'s portal access has been updated.` });
+                                                            fetchData();
+                                                        } catch (e: any) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+                                                        setIsRestricting(null);
+                                                    }}
+                                                >
+                                                    {isRestricting === s.id ? <Loader2 className="w-3 h-3 animate-spin mr-1.5" /> : s.is_restricted ? <Lock className="w-3 h-3 mr-1.5" /> : null}
+                                                    {s.is_restricted ? "Restricted" : "Restrict Access"}
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </Card>
                     </div>
                 )}
 

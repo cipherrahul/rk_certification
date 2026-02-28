@@ -312,6 +312,30 @@ export default function StudentPortal() {
     // DASHBOARD APPLICATION
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
+            {/* Restriction Overlay */}
+            {student?.is_restricted && (
+                <div className="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-6 text-center">
+                    <Card className="max-w-md border-0 shadow-2xl bg-white animate-in zoom-in-95 duration-300">
+                        <CardContent className="p-8 pt-10 flex flex-col items-center">
+                            <div className="w-20 h-20 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-6 animate-pulse">
+                                <Lock className="w-10 h-10" />
+                            </div>
+                            <h2 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">Access Restricted</h2>
+                            <p className="text-slate-500 font-medium mb-8 leading-relaxed">
+                                Your access to the student portal has been temporarily restricted by the academic administration.
+                                Please contact your course teacher or the administration office for more information.
+                            </p>
+                            <Button
+                                variant="outline"
+                                className="w-full border-2 hover:bg-slate-50 font-bold"
+                                onClick={handleLogout}
+                            >
+                                <LogOut className="w-4 h-4 mr-2" /> Sign Out
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
             {/* Sidebar */}
             <aside className="w-full md:w-64 bg-slate-900 text-slate-300 md:min-h-screen shrink-0 flex flex-col">
                 <div className="p-6 bg-slate-950 border-b border-slate-800">
