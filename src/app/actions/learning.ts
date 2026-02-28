@@ -226,7 +226,7 @@ export async function loginStudent(studentIdStr: string, passwordHash: string) {
     // Find student by UID and match password. Ensure your DB has password_hash populated.
     const { data: student, error } = await supabase
         .from('students')
-        .select('id, first_name, last_name, course')
+        .select('id, first_name, last_name, course, photo_url')
         .ilike('student_id', studentIdStr)
         .eq('password_hash', passwordHash)
         .single()
@@ -259,7 +259,7 @@ export async function getStudentSession() {
     const supabase = await getSupabase()
     const { data: student } = await supabase
         .from('students')
-        .select('id, student_id, first_name, last_name, course')
+        .select('id, student_id, first_name, last_name, father_name, mobile, course, academic_session, photo_url')
         .eq('id', sessionId)
         .single()
 
@@ -279,6 +279,22 @@ export async function getStudentSession() {
             course_id: courseData?.id
         }
     }
+}
+
+// ------------------------------------------------------------------
+// Student Fee Payments
+// ------------------------------------------------------------------
+
+export async function getStudentFeePayments(studentId: string) {
+    const supabase = await getSupabase()
+    const { data, error } = await supabase
+        .from('fee_payments')
+        .select(`*, students(first_name, last_name, course, student_id, academic_session, branches(*))`)
+        .eq('student_id', studentId)
+        .order('payment_date', { ascending: false })
+
+    if (error) throw error
+    return data
 }
 
 // ------------------------------------------------------------------

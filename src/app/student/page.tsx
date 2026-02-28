@@ -1,19 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
     GraduationCap, LogOut, Video, Library, ClipboardList, Target,
-    Calendar, Clock, Link as LinkIcon, FileText, ChevronRight, Lock, MessageCircle, Send, RefreshCw, BookOpen
+    Calendar, Clock, Link as LinkIcon, FileText, ChevronRight, Lock, MessageCircle, Send, RefreshCw, BookOpen, Download, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { StudentIDCard } from "@/components/students/StudentIDCard";
+import { FeeReceiptView } from "@/components/students/FeeReceiptView";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import {
     loginStudent, logoutStudent, getStudentSession,
     getLiveClasses, getStudyMaterials, getAssignments, getOnlineTests,
-    getOrCreateSupportThread, getSupportMessages, sendSupportMessage
+    getOrCreateSupportThread, getSupportMessages, sendSupportMessage,
+    getStudentFeePayments
 } from "@/app/actions/learning";
 import { getTeacherMaterials, getTeacherAssignments, getTeacherLiveClasses } from "@/app/actions/teacher-portal";
 
@@ -35,7 +41,10 @@ export default function StudentPortal() {
     const [materials, setMaterials] = useState<any[]>([]);
     const [assignments, setAssignments] = useState<any[]>([]);
     const [tests, setTests] = useState<any[]>([]);
+    const [feePayments, setFeePayments] = useState<any[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(false);
+    const [isDownloading, setIsDownloading] = useState<string | null>(null);
+    const cardRef = useRef<HTMLDivElement>(null);
 
     // Support Chat State
     const [supportThread, setSupportThread] = useState<any>(null);
@@ -73,16 +82,18 @@ export default function StudentPortal() {
                 try {
                     // Use course_id if available, otherwise load all and let students see everything
                     const courseFilter = student.course_id || null;
-                    const [liveRes, matRes, assignRes, testRes] = await Promise.all([
+                    const [liveRes, matRes, assignRes, testRes, feeRes] = await Promise.all([
                         getLiveClasses(courseFilter),
                         getStudyMaterials(courseFilter),
                         getAssignments(courseFilter),
-                        getOnlineTests(courseFilter)
+                        getOnlineTests(courseFilter),
+                        getStudentFeePayments(student.id)
                     ]);
                     setLiveClasses(liveRes || []);
                     setMaterials(matRes || []);
                     setAssignments(assignRes || []);
                     setTests(testRes || []);
+                    setFeePayments(feeRes || []);
 
                     // Teacher class-specific content
                     const studentClass = student.course || null;
@@ -155,6 +166,40 @@ export default function StudentPortal() {
             setNewMessage(tempMsg);
         }
         setIsSendingMessage(false);
+    };
+
+    const handleDownloadIDCard = async () => {
+        if (!cardRef.current || !student) return;
+        setIsDownloading("idcard");
+        try {
+            const canvas = await html2canvas(cardRef.current, {
+                scale: 3,
+                useCORS: true,
+                backgroundColor: null,
+            });
+            const imgData = canvas.toDataURL("image/png");
+            const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: [340, 210] });
+            pdf.addImage(imgData, "PNG", 0, 0, 340, 210);
+            pdf.save(`IDCard-${student.student_id}-${student.first_name}.pdf`);
+            toast({ title: "Downloaded!", description: "ID Card saved as PDF." });
+        } catch (e) {
+            console.error("ID Card PDF generation failed:", e);
+            toast({ title: "Download Failed", variant: "destructive" });
+        }
+        setIsDownloading(null);
+    };
+
+    const handleDownloadReceipt = async (paymentId: string) => {
+        const el = document.getElementById(`receipt-${paymentId}`);
+        if (!el || !student) return;
+        // The FeeReceiptView already has a download button inside it,
+        // but it's hidden or we can trigger it.
+        // Actually FeeReceiptView has its own internal download logic.
+        // We'll just let the user click the button in the view if they want,
+        // BUT for better UX in "Downloads" tab, we should provide a direct button.
+        // Let's just find the button inside it and click it or use its logic.
+        const btn = el.querySelector('button');
+        if (btn) (btn as HTMLButtonElement).click();
     };
 
     const handleLogout = async () => {
@@ -242,6 +287,7 @@ export default function StudentPortal() {
                         { id: "assignments", icon: ClipboardList, label: "Assignments" },
                         { id: "tests", icon: Target, label: "Online Tests" },
                         { id: "class", icon: BookOpen, label: "My Class Content" },
+                        { id: "downloads", icon: Download, label: "Downloads" },
                         { id: "support", icon: MessageCircle, label: "Support / Chat" },
                     ].map(tab => (
                         <button
@@ -555,6 +601,96 @@ export default function StudentPortal() {
                                 </div>
                             )}
                         </section>
+                    </div>
+                )}
+
+                {!isLoadingData && activeTab === "downloads" && (
+                    <div className="space-y-8">
+                        <div className="flex flex-col md:flex-row items-start justify-between gap-8">
+                            <Card className="shadow-lg border-0 bg-white p-6 flex flex-col items-center gap-4 shrink-0">
+                                <h3 className="font-bold text-slate-800 uppercase tracking-wider text-sm">Student ID Card</h3>
+                                <div className="border shadow-md rounded-xl overflow-hidden">
+                                    <StudentIDCard ref={cardRef} student={student} />
+                                </div>
+                                <Button
+                                    onClick={handleDownloadIDCard}
+                                    disabled={isDownloading === "idcard"}
+                                    className="w-full bg-indigo-600 hover:bg-indigo-700"
+                                >
+                                    {isDownloading === "idcard" ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Download className="w-4 h-4 mr-2" />}
+                                    Download ID Card (PDF)
+                                </Button>
+                            </Card>
+
+                            <div className="flex-1 space-y-4 w-full">
+                                <div className="bg-indigo-50 border border-indigo-100 p-5 rounded-2xl">
+                                    <h4 className="font-bold text-indigo-900 flex items-center gap-2">
+                                        <FileText className="w-5 h-5 text-indigo-500" />
+                                        Downloads Center
+                                    </h4>
+                                    <p className="text-sm text-indigo-700 mt-1">
+                                        Access your institutional documents including your digital identity card and official fee receipts.
+                                    </p>
+                                </div>
+
+                                <Card className="shadow-sm">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl">Fee Receipts</CardTitle>
+                                        <CardDescription>View and download receipts for all your processed fee payments.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {feePayments.length === 0 ? (
+                                            <div className="text-center py-12 text-slate-400">No fee payment records found.</div>
+                                        ) : (
+                                            <div className="overflow-x-auto">
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow>
+                                                            <TableHead>Receipt No.</TableHead>
+                                                            <TableHead>Date</TableHead>
+                                                            <TableHead>Amount</TableHead>
+                                                            <TableHead>Status</TableHead>
+                                                            <TableHead className="text-right">Action</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {feePayments.map((payment: any) => (
+                                                            <TableRow key={payment.id}>
+                                                                <TableCell className="font-mono text-xs font-bold">{payment.receipt_number}</TableCell>
+                                                                <TableCell>{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
+                                                                <TableCell className="font-bold text-indigo-600">₹{Number(payment.paid_amount).toLocaleString("en-IN")}</TableCell>
+                                                                <TableCell>
+                                                                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                                                                        Success
+                                                                    </Badge>
+                                                                </TableCell>
+                                                                <TableCell className="text-right">
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        onClick={() => handleDownloadReceipt(payment.id)}
+                                                                        className="text-indigo-600 hover:bg-indigo-50 font-bold"
+                                                                    >
+                                                                        <Download className="w-4 h-4 mr-2" />
+                                                                        Receipt
+                                                                    </Button>
+                                                                    {/* Hidden Receipt for generation */}
+                                                                    <div style={{ position: "absolute", left: "-9999px", top: "0", pointerEvents: "none" }}>
+                                                                        <div id={`receipt-${payment.id}`}>
+                                                                            <FeeReceiptView receipt={{ ...payment, students: student }} />
+                                                                        </div>
+                                                                    </div>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        </div>
                     </div>
                 )}
 

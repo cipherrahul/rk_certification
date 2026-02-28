@@ -57,12 +57,29 @@ export async function getTeacherSession() {
     const supabase = await getSupabase()
     const { data: teacher } = await supabase
         .from('teachers')
-        .select('id, name, teacher_id, subject, assigned_class, department, photo_url, bio')
+        .select('id, name, teacher_id, subject, assigned_class, department, photo_url, bio, contact, qualification, experience, joining_date, basic_salary, allowances')
         .eq('id', sessionId)
         .single()
 
     if (!teacher) return { success: false }
     return { success: true, data: teacher }
+}
+
+// ------------------------------------------------------------------
+// Teacher Salary Records
+// ------------------------------------------------------------------
+
+export async function getTeacherSalaryRecords(teacherId: string) {
+    const supabase = await getSupabase()
+    const { data, error } = await supabase
+        .from('salary_records')
+        .select('*')
+        .eq('teacher_id', teacherId)
+        .order('year', { ascending: false })
+        .order('month', { ascending: false })
+
+    if (error) throw error
+    return data
 }
 
 // ------------------------------------------------------------------

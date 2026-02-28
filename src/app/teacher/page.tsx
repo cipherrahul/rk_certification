@@ -1,23 +1,29 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
     GraduationCap, LogOut, Video, Library, ClipboardList, Plus,
     Trash2, Loader2, Lock, ChevronRight, Calendar, Link as LinkIcon, FileText, BookOpen, Target,
-    MessageCircle, Send, RefreshCw
+    MessageCircle, Send, RefreshCw, Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { TeacherIDCard } from "@/components/teachers/TeacherIDCard";
+import { SalarySlip } from "@/components/teachers/SalarySlip";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import {
     loginTeacher, logoutTeacher, getTeacherSession,
     createTeacherMaterial, getTeacherMaterials, deleteTeacherMaterial,
     createTeacherAssignment, getTeacherAssignments, deleteTeacherAssignment,
     createTeacherLiveClass, getTeacherLiveClasses, deleteTeacherLiveClass,
-    getOrCreateTeacherAdminThread, getTeacherAdminMessages, sendTeacherAdminMessage
+    getOrCreateTeacherAdminThread, getTeacherAdminMessages, sendTeacherAdminMessage,
+    getTeacherSalaryRecords
 } from "@/app/actions/teacher-portal";
 
 interface Teacher {
@@ -29,6 +35,12 @@ interface Teacher {
     department: string;
     photo_url: string | null;
     bio?: string;
+    contact: string;
+    qualification: string;
+    experience: string;
+    joining_date: string;
+    basic_salary: number;
+    allowances: number;
 }
 
 interface ChatMessage {
@@ -37,6 +49,23 @@ interface ChatMessage {
     sender_role: 'teacher' | 'admin';
     message: string;
     created_at: string;
+}
+
+interface SalaryRecord {
+    id: string;
+    slip_number: string;
+    month: string;
+    year: number;
+    basic_salary: number;
+    allowances: number;
+    deductions: number;
+    net_salary: number;
+    payment_status: string;
+    payment_date: string | null;
+    slip_notes: string | null;
+    created_at: string;
+    whatsapp_status: string;
+    pdf_url?: string;
 }
 
 export default function TeacherPortal() {
@@ -53,7 +82,10 @@ export default function TeacherPortal() {
     const [materials, setMaterials] = useState<any[]>([]);
     const [assignments, setAssignments] = useState<any[]>([]);
     const [liveClasses, setLiveClasses] = useState<any[]>([]);
+    const [salaryRecords, setSalaryRecords] = useState<SalaryRecord[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(false);
+    const [isDownloading, setIsDownloading] = useState<string | null>(null);
+    const cardRef = useRef<HTMLDivElement>(null);
 
     // Material form
     const [matClass, setMatClass] = useState("");
@@ -95,14 +127,16 @@ export default function TeacherPortal() {
         if (!teacher) return;
         setIsLoadingData(true);
         try {
-            const [matRes, astRes, lcRes] = await Promise.all([
+            const [matRes, astRes, lcRes, salRes] = await Promise.all([
                 getTeacherMaterials(teacher.id),
                 getTeacherAssignments(teacher.id),
                 getTeacherLiveClasses(teacher.id),
+                getTeacherSalaryRecords(teacher.id),
             ]);
             setMaterials(matRes || []);
             setAssignments(astRes || []);
             setLiveClasses(lcRes || []);
+            setSalaryRecords(salRes || []);
         } catch (e) { console.error(e); }
         setIsLoadingData(false);
     }, [teacher]);
@@ -227,6 +261,49 @@ export default function TeacherPortal() {
         setIsSendingMsg(false);
     };
 
+    const handleDownloadIDCard = async () => {
+        if (!cardRef.current || !teacher) return;
+        setIsDownloading("idcard");
+        try {
+            const canvas = await html2canvas(cardRef.current, {
+                scale: 3,
+                useCORS: true,
+                backgroundColor: null,
+            });
+            const imgData = canvas.toDataURL("image/png");
+            const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: [340, 210] });
+            pdf.addImage(imgData, "PNG", 0, 0, 340, 210);
+            pdf.save(`IDCard-${teacher.teacher_id}-${teacher.name.replace(/\s+/g, "_")}.pdf`);
+            toast({ title: "Downloaded!", description: "ID Card saved as PDF." });
+        } catch (e) {
+            console.error("ID Card PDF generation failed:", e);
+            toast({ title: "Download Failed", variant: "destructive" });
+        }
+        setIsDownloading(null);
+    };
+
+    const handleDownloadSlip = async (record: SalaryRecord) => {
+        const el = document.getElementById(`slip-${record.id}`);
+        if (!el || !teacher) return;
+        setIsDownloading(record.id);
+        try {
+            const canvas = await html2canvas(el as HTMLDivElement, {
+                scale: 4,
+                useCORS: true,
+                backgroundColor: "#ffffff",
+            });
+            const imgData = canvas.toDataURL("image/jpeg", 1.0);
+            const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: [950, 600] });
+            pdf.addImage(imgData, "JPEG", 0, 0, 950, 600);
+            pdf.save(`${record.slip_number}-${teacher.name.replace(/\s+/g, "_")}.pdf`);
+            toast({ title: "Downloaded!", description: `Salary slip ${record.slip_number} saved.` });
+        } catch (e) {
+            console.error("PDF generation failed:", e);
+            toast({ title: "Download Failed", variant: "destructive" });
+        }
+        setIsDownloading(null);
+    };
+
     if (isLoadingInit) return (
         <div className="min-h-screen flex items-center justify-center">
             <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
@@ -263,6 +340,7 @@ export default function TeacherPortal() {
         { id: "materials", icon: Library, label: "Materials" },
         { id: "assignments", icon: ClipboardList, label: "Assignments" },
         { id: "live", icon: Video, label: "Live Classes" },
+        { id: "downloads", icon: Download, label: "Downloads" },
         { id: "chat", icon: MessageCircle, label: "Admin Chat" },
     ];
 
@@ -546,6 +624,98 @@ export default function TeacherPortal() {
                         </div>
                     </div>
                 )}
+
+                {/* ── Downloads ── */}
+                {!isLoadingData && activeTab === "downloads" && (
+                    <div className="space-y-8">
+                        <div className="flex flex-col md:flex-row items-start justify-between gap-6">
+                            <Card className="shadow-lg border-0 bg-white p-6 flex flex-col items-center gap-4 shrink-0">
+                                <h3 className="font-bold text-slate-800 uppercase tracking-wider text-sm">Official ID Card</h3>
+                                <div className="border shadow-md rounded-xl overflow-hidden">
+                                    <TeacherIDCard ref={cardRef} teacher={teacher} />
+                                </div>
+                                <Button
+                                    onClick={handleDownloadIDCard}
+                                    disabled={isDownloading === "idcard"}
+                                    className="w-full bg-indigo-600 hover:bg-indigo-700"
+                                >
+                                    {isDownloading === "idcard" ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Download className="w-4 h-4 mr-2" />}
+                                    Download ID Card (PDF)
+                                </Button>
+                            </Card>
+
+                            <div className="flex-1 space-y-4 w-full">
+                                <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-2xl">
+                                    <h4 className="font-bold text-indigo-900 flex items-center gap-2">
+                                        <FileText className="w-5 h-5 text-indigo-500" />
+                                        Document Portal
+                                    </h4>
+                                    <p className="text-sm text-indigo-700 mt-1">
+                                        You can download your institutional identity card and monthly salary slips from this portal.
+                                    </p>
+                                </div>
+
+                                <Card className="shadow-sm">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl">Salary Slips</CardTitle>
+                                        <CardDescription>List of all generated salary slips for the current academic year.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {salaryRecords.length === 0 ? (
+                                            <div className="text-center py-12 text-slate-400">No salary records found yet.</div>
+                                        ) : (
+                                            <div className="overflow-x-auto">
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow>
+                                                            <TableHead>Slip No.</TableHead>
+                                                            <TableHead>Period</TableHead>
+                                                            <TableHead>Net Salary</TableHead>
+                                                            <TableHead>Status</TableHead>
+                                                            <TableHead className="text-right">Action</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {salaryRecords.map(record => (
+                                                            <TableRow key={record.id}>
+                                                                <TableCell className="font-mono text-xs">{record.slip_number}</TableCell>
+                                                                <TableCell className="font-medium">{record.month} {record.year}</TableCell>
+                                                                <TableCell className="font-bold text-emerald-600">₹{Number(record.net_salary).toLocaleString("en-IN")}</TableCell>
+                                                                <TableCell>
+                                                                    <Badge variant={record.payment_status === "Paid" ? "default" : "outline"} className={record.payment_status === "Paid" ? "bg-emerald-600 hover:bg-emerald-700" : ""}>
+                                                                        {record.payment_status}
+                                                                    </Badge>
+                                                                </TableCell>
+                                                                <TableCell className="text-right">
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        onClick={() => handleDownloadSlip(record)}
+                                                                        disabled={!!isDownloading}
+                                                                        className="text-indigo-600 hover:bg-indigo-50"
+                                                                    >
+                                                                        {isDownloading === record.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                                                                    </Button>
+                                                                    {/* Hidden Salary Slip for generation */}
+                                                                    <div style={{ position: "absolute", left: "-9999px", top: "0", pointerEvents: "none" }}>
+                                                                        <div id={`slip-${record.id}`}>
+                                                                            <SalarySlip teacher={teacher} record={record} />
+                                                                        </div>
+                                                                    </div>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* ── Admin Chat ── */}
                 {!isLoadingData && activeTab === "chat" && (
                     <div className="flex flex-col h-[calc(100vh-140px)] max-h-[800px]">
