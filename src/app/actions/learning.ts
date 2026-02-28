@@ -2,6 +2,9 @@
 
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import Razorpay from 'razorpay'
+
+
 
 async function getSupabase() {
     const cookieStore = cookies()
@@ -382,4 +385,65 @@ export async function getTeachersForStudent(courseName: string) {
 
     if (error) throw error
     return data
+}
+
+// ------------------------------------------------------------------
+// Razorpay Payments
+// ------------------------------------------------------------------
+
+export async function initiateRazorpayOrder(amount: number) {
+    const session = await getStudentSession()
+    if (!session.success || !session.data) {
+        throw new Error('Unauthorized: Please login to pay fees.')
+    }
+
+    const student = session.data
+    const supabase = await getSupabase()
+
+    // Create Razorpay Order
+    // Amount is in paisa (e.g., ₹1 = 100 paisa)
+    const options = {
+        amount: Math.round(amount * 100),
+        currency: "INR",
+        receipt: `receipt_${Date.now()}`,
+        notes: {
+            student_id: student.id,
+            student_name: `${student.first_name} ${student.last_name}`,
+            purpose: "Fee Payment"
+        }
+    }
+
+    // Initialize Razorpay client inside the function to avoid breaking the module if keys are missing
+    const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID || '',
+        key_secret: process.env.RAZORPAY_KEY_SECRET || '',
+    })
+
+    try {
+        const order = await razorpay.orders.create(options)
+
+        // Log the transaction in our DB
+        const { error: dbError } = await supabase.from('payment_transactions').insert({
+            student_id: student.id,
+            razorpay_order_id: order.id,
+            amount: amount,
+            status: 'created',
+            metadata: {
+                receipt: options.receipt,
+                notes: options.notes
+            }
+        })
+
+        if (dbError) throw dbError
+
+        return {
+            success: true,
+            orderId: order.id,
+            amount: order.amount,
+            key: process.env.RAZORPAY_KEY_ID
+        }
+    } catch (error: any) {
+        console.error('Razorpay Order Error:', error)
+        throw new Error(error.message || 'Failed to initiate payment')
+    }
 }

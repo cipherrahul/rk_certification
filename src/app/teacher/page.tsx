@@ -431,7 +431,7 @@ export default function TeacherPortal() {
                         <button key={tab.id}
                             onClick={() => {
                                 setActiveTab(tab.id);
-                                if (tab.id === 'chat') loadChat();
+                                if (tab.id === 'admin-chat') loadChat();
                             }}
                             className={`w-full flex items-center justify-between p-3 rounded-xl transition-all font-medium ${activeTab === tab.id ? "bg-indigo-600 text-white" : "hover:bg-slate-800 text-slate-400 hover:text-white"}`}>
                             <div className="flex items-center gap-3"><tab.icon className="w-5 h-5" /> {tab.label}</div>
@@ -678,8 +678,8 @@ export default function TeacherPortal() {
                     </div>
                 )}
 
-                {/* ── Downloads ── */}
-                {!isLoadingData && activeTab === "downloads" && (
+                {/* ── Salary Slips ── */}
+                {!isLoadingData && activeTab === "salary" && (
                     <div className="space-y-8">
                         <div className="flex flex-col md:flex-row items-start justify-between gap-6">
                             <Card className="shadow-lg border-0 bg-white p-6 flex flex-col items-center gap-4 shrink-0">
@@ -872,7 +872,7 @@ export default function TeacherPortal() {
                 )}
 
                 {/* ── Student Chat ── */}
-                {!isLoadingData && activeTab === "student-chat" && (
+                {!isLoadingData && activeTab === "chat" && (
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 h-[calc(100vh-140px)] max-h-[800px]">
                         <Card className="md:col-span-1 overflow-hidden flex flex-col">
                             <CardHeader className="p-4 border-b">
@@ -979,6 +979,68 @@ export default function TeacherPortal() {
                                 </>
                             )}
                         </div>
+                    </div>
+                )}
+
+                {/* ── Admin Chat ── */}
+                {activeTab === "admin-chat" && (
+                    <div className="flex flex-col h-[calc(100vh-200px)] max-h-[700px]">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                                    <MessageCircle className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Admin Support</h2>
+                                    <p className="text-sm text-slate-500 font-medium font-mono uppercase tracking-wider">Direct institutional channel</p>
+                                </div>
+                            </div>
+                            <Button variant="outline" size="sm" onClick={loadChat} disabled={isLoadingChat} className="bg-white border-2">
+                                <RefreshCw className={`w-4 h-4 mr-2 ${isLoadingChat ? 'animate-spin' : ''}`} /> Sync
+                            </Button>
+                        </div>
+
+                        <Card className="flex-1 flex flex-col overflow-hidden border-0 shadow-xl bg-white rounded-3xl">
+                            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30">
+                                {chatMessages.length === 0 && !isLoadingChat && (
+                                    <div className="h-full flex flex-col items-center justify-center text-slate-400 opacity-30">
+                                        <MessageCircle className="w-16 h-16 mb-4" />
+                                        <p className="font-bold">No messages yet.</p>
+                                    </div>
+                                )}
+                                {chatMessages.map((m) => (
+                                    <div key={m.id} className={`flex ${m.sender_role === 'teacher' ? 'justify-end' : 'justify-start'}`}>
+                                        <div className={`max-w-[80%] rounded-2xl px-5 py-3 shadow-sm ${m.sender_role === 'teacher' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white text-slate-800 border-2 border-slate-100 rounded-tl-none'}`}>
+                                            <div className="font-black text-[9px] uppercase tracking-widest opacity-60 mb-1">{m.sender_role}</div>
+                                            <div className="text-sm leading-relaxed">{m.message}</div>
+                                            <div className="text-[9px] mt-2 opacity-50 text-right font-bold italic">{new Date(m.created_at).toLocaleString()}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {isLoadingChat && chatMessages.length === 0 && (
+                                    <div className="h-full flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-indigo-400" /></div>
+                                )}
+                            </div>
+                            <div className="p-5 bg-white border-t-2 border-slate-50">
+                                <form onSubmit={handleSendMessage} className="relative flex items-center gap-3">
+                                    <Input
+                                        className="h-14 bg-slate-50 border-0 focus-visible:ring-indigo-500 rounded-2xl pr-16 text-base font-medium"
+                                        placeholder="Type your official query here..."
+                                        value={chatInput}
+                                        onChange={e => setChatInput(e.target.value)}
+                                        disabled={isSendingMsg}
+                                    />
+                                    <Button
+                                        size="icon"
+                                        className="absolute right-2 h-10 w-10 bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-lg shadow-indigo-200"
+                                        type="submit"
+                                        disabled={isSendingMsg || !chatInput.trim()}
+                                    >
+                                        {isSendingMsg ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                                    </Button>
+                                </form>
+                            </div>
+                        </Card>
                     </div>
                 )}
 

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
     GraduationCap, LogOut, Video, Library, ClipboardList, Target,
-    Calendar, Clock, Link as LinkIcon, FileText, ChevronRight, Lock, MessageCircle, Send, RefreshCw, BookOpen, Download, Loader2
+    Calendar, Clock, Link as LinkIcon, FileText, ChevronRight, Lock, MessageCircle, Send, RefreshCw, BookOpen, Download, Loader2, ShieldCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,8 +20,10 @@ import {
     getLiveClasses, getStudyMaterials, getAssignments, getOnlineTests,
     getOrCreateSupportThread, getSupportMessages, sendSupportMessage,
     getStudentFeePayments,
-    getTeachersForStudent
+    getTeachersForStudent,
+    initiateRazorpayOrder
 } from "@/app/actions/learning";
+import { createClient } from "@/lib/supabase/client";
 import {
     getTeacherMaterials, getTeacherAssignments, getTeacherLiveClasses,
     getOrCreateTeacherStudentThread, getTeacherStudentMessages, sendTeacherStudentMessage
@@ -71,14 +73,40 @@ export default function StudentPortal() {
     const [isSendingTeacherMsg, setIsSendingTeacherMsg] = useState(false);
     const [isLoadingTeachers, setIsLoadingTeachers] = useState(false);
     const [isLoadingTeacherChat, setIsLoadingTeacherChat] = useState(false);
+    const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
     // Initialization: check session
     useEffect(() => {
+        // Load Razorpay Script
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        document.body.appendChild(script);
+
         const checkSession = async () => {
             try {
                 const res = await getStudentSession();
                 if (res.success && res.data) {
                     setStudent(res.data);
+
+                    // Setup Realtime Listener
+                    const supabase = createClient();
+                    const channel = supabase
+                        .channel('fee_updates')
+                        .on('postgres_changes', {
+                            event: 'INSERT',
+                            schema: 'public',
+                            table: 'fee_payments',
+                            filter: `student_id=eq.${res.data.id}`
+                        }, () => {
+                            toast({ title: "Payment Verified", description: "Your fee status has been updated successfully!" });
+                            fetchPortalData(res.data.id);
+                        })
+                        .subscribe();
+
+                    return () => {
+                        supabase.removeChannel(channel);
+                    };
                 }
             } catch (e) {
                 console.error(e);
@@ -91,49 +119,57 @@ export default function StudentPortal() {
     // Fetch data when student changes
     useEffect(() => {
         if (student) {
-            const fetchPortalData = async () => {
-                setIsLoadingData(true);
-                try {
-                    // Use course_id if available, otherwise load all and let students see everything
-                    const courseFilter = student.course_id || null;
-                    const [liveRes, matRes, assignRes, testRes, feeRes] = await Promise.all([
-                        getLiveClasses(courseFilter),
-                        getStudyMaterials(courseFilter),
-                        getAssignments(courseFilter),
-                        getOnlineTests(courseFilter),
-                        getStudentFeePayments(student.id)
-                    ]);
-                    setLiveClasses(liveRes || []);
-                    setMaterials(matRes || []);
-                    setAssignments(assignRes || []);
-                    setTests(testRes || []);
-                    setFeePayments(feeRes || []);
-
-                    // Teacher class-specific content
-                    const studentClass = student.course || null;
-                    if (studentClass) {
-                        const [tMat, tAst, tLc] = await Promise.all([
-                            getTeacherMaterials(undefined, studentClass),
-                            getTeacherAssignments(undefined, studentClass),
-                            getTeacherLiveClasses(undefined, studentClass),
-                        ]);
-                        setClassMaterials(tMat || []);
-                        setClassAssignments(tAst || []);
-                        setClassLiveClasses(tLc || []);
-
-                        setIsLoadingTeachers(true);
-                        const tchrs = await getTeachersForStudent(studentClass);
-                        setTeachers(tchrs || []);
-                        setIsLoadingTeachers(false);
-                    }
-                } catch (error) {
-                    console.error(error);
-                }
-                setIsLoadingData(false);
-            };
-            fetchPortalData();
+            fetchPortalData(student.id);
         }
     }, [student]);
+
+    const fetchPortalData = async (studentId?: string) => {
+        const id = studentId || student?.id;
+        if (!id) return;
+
+        setIsLoadingData(true);
+        try {
+            // Use course_id if available, otherwise load all and let students see everything
+            const courseFilter = student?.course_id || null;
+            const [liveRes, matRes, assignRes, testRes, feeRes] = await Promise.all([
+                getLiveClasses(courseFilter),
+                getStudyMaterials(courseFilter),
+                getAssignments(courseFilter),
+                getOnlineTests(courseFilter),
+                getStudentFeePayments(id)
+            ]);
+            setLiveClasses(liveRes);
+            setMaterials(matRes || []);
+            setAssignments(assignRes || []);
+            setTests(testRes || []);
+            setFeePayments(feeRes || []);
+
+            // Support Chat Init
+            const thread = await getOrCreateSupportThread(id);
+            if (thread) {
+                setSupportThread(thread);
+                const msgs = await getSupportMessages(thread.id);
+                setSupportMessages(msgs);
+            }
+
+            // Teacher Class Content & Chat
+            const teachersData = await getTeachersForStudent(student?.course || '');
+            setTeachers(teachersData || []);
+
+            const [tMatRes, tAssignRes, tLiveRes] = await Promise.all([
+                getTeacherMaterials(student?.course || ''),
+                getTeacherAssignments(student?.course || ''),
+                getTeacherLiveClasses(student?.course || '')
+            ]);
+            setClassMaterials(tMatRes || []);
+            setClassAssignments(tAssignRes || []);
+            setClassLiveClasses(tLiveRes || []);
+
+        } catch (e) {
+            console.error(e);
+        }
+        setIsLoadingData(false);
+    };
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -248,6 +284,48 @@ export default function StudentPortal() {
         // Let's just find the button inside it and click it or use its logic.
         const btn = el.querySelector('button');
         if (btn) (btn as HTMLButtonElement).click();
+    };
+
+    const handlePayment = async (amount: number) => {
+        if (!student) return;
+        setIsProcessingPayment(true);
+        try {
+            const res = await initiateRazorpayOrder(amount);
+            if (res.success) {
+                const options = {
+                    key: res.key,
+                    amount: res.amount,
+                    currency: "INR",
+                    name: "RK Institution",
+                    description: "Fee Payment",
+                    order_id: res.orderId,
+                    handler: async function (response: any) {
+                        toast({
+                            title: "Payment Successful",
+                            description: "Verifying your payment, please wait...",
+                        });
+                        // The realtime listener will handle the UI update when the webhook completes
+                    },
+                    prefill: {
+                        name: `${student.first_name} ${student.last_name}`,
+                        contact: student.mobile,
+                    },
+                    theme: {
+                        color: "#4f46e5",
+                    },
+                };
+                const rzp = new (window as any).Razorpay(options);
+                rzp.open();
+            }
+        } catch (error: any) {
+            toast({
+                title: "Payment Failed",
+                description: error.message || "Could not initiate payment",
+                variant: "destructive",
+            });
+        } finally {
+            setIsProcessingPayment(false);
+        }
     };
 
     const handleLogout = async () => {
@@ -926,7 +1004,20 @@ export default function StudentPortal() {
                                     <div className="text-3xl font-black italic">
                                         ₹{Number(feePayments[0]?.remaining_amount || 0).toLocaleString('en-IN')}
                                     </div>
-                                    <p className="text-rose-100 text-xs mt-2 font-medium">Due for upcoming sessions</p>
+                                    <div className="flex items-center justify-between mt-2">
+                                        <p className="text-rose-100 text-xs font-medium">Due for upcoming sessions</p>
+                                        {Number(feePayments[0]?.remaining_amount || 0) > 0 && (
+                                            <Button
+                                                size="sm"
+                                                disabled={isProcessingPayment}
+                                                className="bg-white text-rose-600 hover:bg-rose-50 h-7 text-[10px] font-bold uppercase tracking-wider"
+                                                onClick={() => handlePayment(Number(feePayments[0]?.remaining_amount))}
+                                            >
+                                                {isProcessingPayment ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <ShieldCheck className="w-3 h-3 mr-1" />}
+                                                Pay Pending
+                                            </Button>
+                                        )}
+                                    </div>
                                 </CardContent>
                             </Card>
                         </div>

@@ -12,6 +12,7 @@ interface FeeReceiptViewProps {
         remaining_amount: number;
         payment_date: string;
         payment_mode: string;
+        razorpay_payment_id?: string;
         notes?: string;
         students: {
             first_name: string;
@@ -192,6 +193,14 @@ export const FeeReceiptView = React.forwardRef<HTMLDivElement, FeeReceiptViewPro
                             <div className="mt-8 border-2 border-black p-3 text-xs">
                                 <span className="font-black uppercase block mb-1">Remarks:</span>
                                 <p className="font-medium italic">{receipt.notes}</p>
+                            </div>
+                        )}
+
+                        {/* Transaction ID Section */}
+                        {receipt.razorpay_payment_id && (
+                            <div className="mt-4 flex items-center gap-2 text-[10px] font-mono text-slate-500">
+                                <ShieldCheck className="w-3 h-3" />
+                                <span>Transaction ID: {receipt.razorpay_payment_id}</span>
                             </div>
                         )}
                     </div>
