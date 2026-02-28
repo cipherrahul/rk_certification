@@ -69,6 +69,7 @@ const programs = [
     { slug: "secondary-excellence", title: "Secondary Excellence", students: "0.8k+", icon: TrendingUp, highlight: "Trending" },
     { slug: "cuet-success", title: "CUET Success", students: "1.5k+", icon: Zap, highlight: "Career Ready" },
     { slug: "full-stack-web", title: "Full Stack Development", students: "2.5k+", icon: Globe, highlight: "Tech Fast-Track" },
+    { slug: "general-competitive", title: "General Competitive", students: "1.8k+", icon: TrendingUp, highlight: "Career Launch" },
 ];
 
 const promotionalQuotes = [
