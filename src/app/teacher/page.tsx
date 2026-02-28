@@ -984,61 +984,110 @@ export default function TeacherPortal() {
 
                 {/* ── Admin Chat ── */}
                 {activeTab === "admin-chat" && (
-                    <div className="flex flex-col h-[calc(100vh-200px)] max-h-[700px]">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
-                                    <MessageCircle className="w-6 h-6" />
+                    <div className="flex flex-col h-[calc(100vh-200px)] max-h-[800px] animate-in fade-in duration-300">
+                        {/* Clean Minimalist Header */}
+                        <div className="flex items-center justify-between mb-6 px-1">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg">
+                                    <MessageCircle className="w-6 h-6 text-white" />
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Admin Support</h2>
-                                    <p className="text-sm text-slate-500 font-medium font-mono uppercase tracking-wider">Direct institutional channel</p>
+                                    <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Admin Support</h2>
+                                    <p className="text-xs text-slate-500 font-medium">Institutional helpdesk & inquiries</p>
                                 </div>
                             </div>
-                            <Button variant="outline" size="sm" onClick={loadChat} disabled={isLoadingChat} className="bg-white border-2">
-                                <RefreshCw className={`w-4 h-4 mr-2 ${isLoadingChat ? 'animate-spin' : ''}`} /> Sync
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={loadChat}
+                                disabled={isLoadingChat}
+                                className="border-slate-200 text-slate-600 hover:bg-slate-50 rounded-lg font-semibold text-xs h-9"
+                            >
+                                <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoadingChat ? 'animate-spin' : ''}`} />
+                                Sync
                             </Button>
                         </div>
 
-                        <Card className="flex-1 flex flex-col overflow-hidden border-0 shadow-xl bg-white rounded-3xl">
-                            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30">
+                        {/* Professional Chat Container */}
+                        <Card className="flex-1 flex flex-col overflow-hidden border border-slate-200 shadow-sm bg-white rounded-2xl">
+                            {/* Messages Area */}
+                            <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-slate-200">
                                 {chatMessages.length === 0 && !isLoadingChat && (
-                                    <div className="h-full flex flex-col items-center justify-center text-slate-400 opacity-30">
-                                        <MessageCircle className="w-16 h-16 mb-4" />
-                                        <p className="font-bold">No messages yet.</p>
+                                    <div className="h-full flex flex-col items-center justify-center text-center">
+                                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                                            <MessageCircle className="w-8 h-8 text-slate-300" />
+                                        </div>
+                                        <h3 className="font-semibold text-slate-800">No Messages</h3>
+                                        <p className="text-sm text-slate-500 max-w-[200px] mt-1">Start a conversation with the administration.</p>
                                     </div>
                                 )}
-                                {chatMessages.map((m) => (
-                                    <div key={m.id} className={`flex ${m.sender_role === 'teacher' ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`max-w-[80%] rounded-2xl px-5 py-3 shadow-sm ${m.sender_role === 'teacher' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white text-slate-800 border-2 border-slate-100 rounded-tl-none'}`}>
-                                            <div className="font-black text-[9px] uppercase tracking-widest opacity-60 mb-1">{m.sender_role}</div>
-                                            <div className="text-sm leading-relaxed">{m.message}</div>
-                                            <div className="text-[9px] mt-2 opacity-50 text-right font-bold italic">{new Date(m.created_at).toLocaleString()}</div>
+
+                                {chatMessages.map((m, idx) => {
+                                    const isTeacher = m.sender_role === 'teacher';
+                                    const showTime = idx === 0 || new Date(m.created_at).getTime() - new Date(chatMessages[idx - 1].created_at).getTime() > 1000 * 60 * 30;
+
+                                    return (
+                                        <div key={m.id} className="space-y-1">
+                                            {showTime && (
+                                                <div className="flex justify-center my-6">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-md border border-slate-100">
+                                                        {new Date(m.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            <div className={`flex ${isTeacher ? 'justify-end' : 'justify-start'}`}>
+                                                <div className="max-w-[80%]">
+                                                    <div className={`text-[10px] font-bold mb-1 px-1 flex items-center gap-1.5 ${isTeacher ? 'justify-end text-indigo-600' : 'text-slate-500'}`}>
+                                                        {isTeacher ? 'You' : 'Administration'}
+                                                        {!isTeacher && <div className="w-1 h-1 rounded-full bg-emerald-500" />}
+                                                    </div>
+                                                    <div className={`px-5 py-3.5 text-sm leading-relaxed ${isTeacher
+                                                            ? 'bg-indigo-600 text-white rounded-2xl rounded-tr-sm shadow-md'
+                                                            : 'bg-slate-50 text-slate-800 border border-slate-200 rounded-2xl rounded-tl-sm'
+                                                        }`}>
+                                                        {m.message}
+                                                        <div className={`text-[9px] mt-2 font-medium opacity-60 text-right ${isTeacher ? 'text-indigo-100' : 'text-slate-400'}`}>
+                                                            {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
+
                                 {isLoadingChat && chatMessages.length === 0 && (
-                                    <div className="h-full flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-indigo-400" /></div>
+                                    <div className="h-full flex items-center justify-center">
+                                        <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
+                                    </div>
                                 )}
                             </div>
-                            <div className="p-5 bg-white border-t-2 border-slate-50">
-                                <form onSubmit={handleSendMessage} className="relative flex items-center gap-3">
+
+                            {/* Minimalist Input Section */}
+                            <div className="p-4 bg-slate-50/50 border-t border-slate-100">
+                                <form onSubmit={handleSendMessage} className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-1.5 shadow-sm focus-within:border-indigo-300 transition-all">
                                     <Input
-                                        className="h-14 bg-slate-50 border-0 focus-visible:ring-indigo-500 rounded-2xl pr-16 text-base font-medium"
-                                        placeholder="Type your official query here..."
+                                        className="flex-1 bg-transparent border-0 focus-visible:ring-0 text-slate-900 placeholder:text-slate-400 font-medium"
+                                        placeholder="Type your message..."
                                         value={chatInput}
                                         onChange={e => setChatInput(e.target.value)}
                                         disabled={isSendingMsg}
                                     />
                                     <Button
-                                        size="icon"
-                                        className="absolute right-2 h-10 w-10 bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-lg shadow-indigo-200"
+                                        size="sm"
+                                        className={`h-9 px-4 rounded-lg font-bold transition-all ${chatInput.trim()
+                                                ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                                                : 'bg-slate-100 text-slate-400'
+                                            }`}
                                         type="submit"
                                         disabled={isSendingMsg || !chatInput.trim()}
                                     >
-                                        {isSendingMsg ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                                        {isSendingMsg ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                                     </Button>
                                 </form>
+                                <div className="mt-2 px-2 flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                                    <Lock className="w-3 h-3" /> Secure Institutional Channel
+                                </div>
                             </div>
                         </Card>
                     </div>
