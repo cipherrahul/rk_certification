@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Plus, Eye, Pencil, Trash2, UserCog } from "lucide-react";
+import { Search, Plus, Eye, Pencil, Trash2, UserCog, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,8 +15,9 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { deleteTeacherAction } from "@/lib/actions/teacher.action";
+import { deleteTeacherAction, updateTeacherPasswordAction } from "@/lib/actions/teacher.action";
 import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
 
 interface Teacher {
     id: string;
@@ -41,9 +42,21 @@ interface TeacherTableProps {
 
 export function TeacherTable({ teachers: initialTeachers }: TeacherTableProps) {
     const router = useRouter();
+    const { toast } = useToast();
     const [search, setSearch] = useState("");
     const [teachers, setTeachers] = useState(initialTeachers);
     const [deletingId, setDeletingId] = useState<string | null>(null);
+
+    const handleSetPassword = async (teacherId: string, teacherName: string) => {
+        const newPassword = prompt(`Enter new portal password for ${teacherName}:`);
+        if (!newPassword) return;
+        const res = await updateTeacherPasswordAction(teacherId, newPassword);
+        if (res.success) {
+            toast({ title: "Password updated!", description: `${teacherName} can now log in to the Teacher Portal.` });
+        } else {
+            toast({ title: "Error", description: res.error, variant: "destructive" });
+        }
+    };
 
     const filtered = teachers.filter((t) => {
         const s = search.toLowerCase();
@@ -162,6 +175,14 @@ export function TeacherTable({ teachers: initialTeachers }: TeacherTableProps) {
                                                     <Eye className="w-4 h-4" />
                                                 </Button>
                                             </Link>
+                                            <Button
+                                                variant="ghost" size="icon"
+                                                className="h-8 w-8 text-slate-500 hover:text-amber-600 hover:bg-amber-50"
+                                                title="Set Portal Password"
+                                                onClick={() => handleSetPassword(teacher.id, teacher.name)}
+                                            >
+                                                <Key className="w-4 h-4" />
+                                            </Button>
                                             <Link href={`/admin/teachers/${teacher.id}?edit=true`}>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30" title="Edit">
                                                     <Pencil className="w-4 h-4" />

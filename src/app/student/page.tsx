@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
     GraduationCap, LogOut, Video, Library, ClipboardList, Target,
-    Calendar, Clock, Link as LinkIcon, FileText, ChevronRight, Lock, MessageCircle, Send, RefreshCw
+    Calendar, Clock, Link as LinkIcon, FileText, ChevronRight, Lock, MessageCircle, Send, RefreshCw, BookOpen
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import {
     getLiveClasses, getStudyMaterials, getAssignments, getOnlineTests,
     getOrCreateSupportThread, getSupportMessages, sendSupportMessage
 } from "@/app/actions/learning";
+import { getTeacherMaterials, getTeacherAssignments, getTeacherLiveClasses } from "@/app/actions/teacher-portal";
 
 export default function StudentPortal() {
     const { toast } = useToast();
@@ -42,6 +43,11 @@ export default function StudentPortal() {
     const [newMessage, setNewMessage] = useState("");
     const [isSendingMessage, setIsSendingMessage] = useState(false);
     const [isLoadingChat, setIsLoadingChat] = useState(false);
+
+    // Teacher Class Content State
+    const [classMaterials, setClassMaterials] = useState<any[]>([]);
+    const [classAssignments, setClassAssignments] = useState<any[]>([]);
+    const [classLiveClasses, setClassLiveClasses] = useState<any[]>([]);
 
     // Initialization: check session
     useEffect(() => {
@@ -77,6 +83,19 @@ export default function StudentPortal() {
                     setMaterials(matRes || []);
                     setAssignments(assignRes || []);
                     setTests(testRes || []);
+
+                    // Teacher class-specific content
+                    const studentClass = student.course || null;
+                    if (studentClass) {
+                        const [tMat, tAst, tLc] = await Promise.all([
+                            getTeacherMaterials(undefined, studentClass),
+                            getTeacherAssignments(undefined, studentClass),
+                            getTeacherLiveClasses(undefined, studentClass),
+                        ]);
+                        setClassMaterials(tMat || []);
+                        setClassAssignments(tAst || []);
+                        setClassLiveClasses(tLc || []);
+                    }
                 } catch (error) {
                     console.error(error);
                 }
@@ -222,6 +241,7 @@ export default function StudentPortal() {
                         { id: "materials", icon: Library, label: "Study Materials" },
                         { id: "assignments", icon: ClipboardList, label: "Assignments" },
                         { id: "tests", icon: Target, label: "Online Tests" },
+                        { id: "class", icon: BookOpen, label: "My Class Content" },
                         { id: "support", icon: MessageCircle, label: "Support / Chat" },
                     ].map(tab => (
                         <button
@@ -436,6 +456,105 @@ export default function StudentPortal() {
                                 </Card>
                             ))
                         )}
+                    </div>
+                )}
+
+                {!isLoadingData && activeTab === "class" && (
+                    <div className="space-y-10">
+                        <div className="flex items-center gap-3 pb-4 border-b border-slate-200">
+                            <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center">
+                                <BookOpen className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h2 className="font-black text-slate-900 text-lg">Class Content from Teachers</h2>
+                                <p className="text-sm text-slate-500">Materials, assignments & classes uploaded by your teachers for <strong>{student.course}</strong></p>
+                            </div>
+                        </div>
+
+                        {/* Teacher Live Classes */}
+                        <section>
+                            <h3 className="text-base font-bold text-slate-700 mb-4 flex items-center gap-2"><Video className="w-4 h-4 text-indigo-400" /> Teacher Live Classes</h3>
+                            {classLiveClasses.length === 0 ? (
+                                <div className="p-6 text-center text-slate-400 bg-white rounded-2xl border border-slate-100 text-sm">No live classes scheduled by teachers yet.</div>
+                            ) : (
+                                <div className="grid gap-4">
+                                    {classLiveClasses.map(cls => (
+                                        <Card key={cls.id} className="shadow-sm">
+                                            <CardContent className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                <div>
+                                                    <div className="font-bold text-slate-900">{cls.subject}: {cls.topic}</div>
+                                                    <div className="flex gap-2 mt-2 flex-wrap items-center text-xs text-slate-500">
+                                                        <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">{cls.platform}</Badge>
+                                                        <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {new Date(cls.scheduled_at).toLocaleString()}</span>
+                                                        {cls.teachers && <span className="text-indigo-600 font-semibold">· by {cls.teachers.name}</span>}
+                                                    </div>
+                                                </div>
+                                                <a href={cls.meeting_url} target="_blank" rel="noreferrer" className="shrink-0">
+                                                    <Button className="bg-indigo-600 hover:bg-indigo-700 w-full md:w-auto font-bold">Join Class</Button>
+                                                </a>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
+
+                        {/* Teacher Materials */}
+                        <section>
+                            <h3 className="text-base font-bold text-slate-700 mb-4 flex items-center gap-2"><Library className="w-4 h-4 text-emerald-500" /> Teacher Study Materials</h3>
+                            {classMaterials.length === 0 ? (
+                                <div className="p-6 text-center text-slate-400 bg-white rounded-2xl border border-slate-100 text-sm">No materials uploaded by teachers yet.</div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                                    {classMaterials.map(mat => (
+                                        <Card key={mat.id} className="shadow-sm hover:shadow-md cursor-pointer group transition-shadow" onClick={() => window.open(mat.file_url, '_blank')}>
+                                            <div className="h-24 bg-slate-50 border-b flex items-center justify-center text-slate-300 group-hover:bg-indigo-50 group-hover:text-indigo-300 transition-colors">
+                                                {mat.material_type === 'Video' ? <Video className="w-9 h-9" /> : <FileText className="w-9 h-9" />}
+                                            </div>
+                                            <CardContent className="p-4">
+                                                <Badge variant="outline" className="text-xs mb-2">{mat.subject}</Badge>
+                                                <h4 className="font-bold text-slate-900 text-sm line-clamp-2 group-hover:text-indigo-600 transition-colors">{mat.title}</h4>
+                                                {mat.teachers && <p className="text-xs text-indigo-500 font-semibold mt-1">by {mat.teachers.name}</p>}
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
+
+                        {/* Teacher Assignments */}
+                        <section>
+                            <h3 className="text-base font-bold text-slate-700 mb-4 flex items-center gap-2"><ClipboardList className="w-4 h-4 text-amber-500" /> Teacher Assignments</h3>
+                            {classAssignments.length === 0 ? (
+                                <div className="p-6 text-center text-slate-400 bg-white rounded-2xl border border-slate-100 text-sm">No assignments posted by teachers yet.</div>
+                            ) : (
+                                <div className="grid gap-4">
+                                    {classAssignments.map(ast => (
+                                        <Card key={ast.id} className="shadow-sm">
+                                            <CardContent className="p-5 flex flex-col md:flex-row justify-between gap-4">
+                                                <div>
+                                                    <div className="flex gap-2 items-center mb-1">
+                                                        <Badge className="bg-amber-100 text-amber-800 border-0 hover:bg-amber-100 text-xs">{ast.subject}</Badge>
+                                                        <span className="text-xs text-rose-500 font-semibold flex items-center gap-1"><Clock className="w-3 h-3" /> Due: {new Date(ast.due_date).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <div className="font-bold text-slate-900">{ast.title}</div>
+                                                    {ast.description && <p className="text-sm text-slate-600 mt-1">{ast.description}</p>}
+                                                    {ast.teachers && <p className="text-xs text-indigo-500 font-semibold mt-1">by {ast.teachers.name}</p>}
+                                                </div>
+                                                <div className="flex flex-col items-end gap-2 shrink-0">
+                                                    <div className="text-xl font-black text-slate-800">{ast.max_marks}<span className="text-xs font-bold text-slate-400 ml-1">pts</span></div>
+                                                    {ast.attachment_url && (
+                                                        <a href={ast.attachment_url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-indigo-600 hover:underline flex items-center gap-1">
+                                                            <FileText className="w-3 h-3" /> Download
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
                     </div>
                 )}
 

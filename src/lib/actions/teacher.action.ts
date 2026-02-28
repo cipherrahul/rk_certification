@@ -235,3 +235,18 @@ export async function deleteTeacherAction(id: string) {
         return { success: false, error: err instanceof Error ? err.message : "Unexpected error" };
     }
 }
+
+// ── updateTeacherPasswordAction ──────────────────────────
+export async function updateTeacherPasswordAction(id: string, newPasswordHash: string) {
+    try {
+        const { supabase } = await verifyAdmin();
+        const { error } = await supabase
+            .from("teachers")
+            .update({ password_hash: newPasswordHash })
+            .eq("id", id);
+        if (error) throw error;
+        return { success: true };
+    } catch (err: unknown) {
+        return { success: false, error: err instanceof Error ? err.message : "Failed to update password" };
+    }
+}
