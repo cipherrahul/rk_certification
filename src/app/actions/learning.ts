@@ -280,3 +280,75 @@ export async function getStudentSession() {
         }
     }
 }
+
+// ------------------------------------------------------------------
+// Support Chat
+// ------------------------------------------------------------------
+
+export async function getOrCreateSupportThread(studentId: string, subject: string = 'General Query') {
+    const supabase = await getSupabase()
+    // Try to find an existing open thread
+    const { data: existing } = await supabase
+        .from('support_threads')
+        .select('*')
+        .eq('student_id', studentId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+    if (existing) return existing
+
+    // Create a new thread
+    const { data: newThread, error } = await supabase
+        .from('support_threads')
+        .insert([{ student_id: studentId, subject }])
+        .select()
+        .single()
+
+    if (error) throw error
+    return newThread
+}
+
+export async function getSupportMessages(threadId: string) {
+    const supabase = await getSupabase()
+    const { data, error } = await supabase
+        .from('support_messages')
+        .select('*')
+        .eq('thread_id', threadId)
+        .order('created_at', { ascending: true })
+    if (error) throw error
+    return data
+}
+
+export async function sendSupportMessage(threadId: string, senderRole: 'student' | 'admin', message: string) {
+    const supabase = await getSupabase()
+    const { data, error } = await supabase
+        .from('support_messages')
+        .insert([{ thread_id: threadId, sender_role: senderRole, message }])
+        .select()
+        .single()
+
+    if (error) throw error
+
+    // Update thread's updated_at timestamp
+    await supabase.from('support_threads').update({ updated_at: new Date().toISOString() }).eq('id', threadId)
+
+    return { success: true, data }
+}
+
+export async function getAllSupportThreads() {
+    const supabase = await getSupabase()
+    const { data, error } = await supabase
+        .from('support_threads')
+        .select('*, students(first_name, last_name, student_id, course)')
+        .order('updated_at', { ascending: false })
+    if (error) throw error
+    return data
+}
+
+export async function updateSupportThreadStatus(threadId: string, status: 'Open' | 'In Progress' | 'Resolved') {
+    const supabase = await getSupabase()
+    const { error } = await supabase.from('support_threads').update({ status }).eq('id', threadId)
+    if (error) throw error
+    return { success: true }
+}

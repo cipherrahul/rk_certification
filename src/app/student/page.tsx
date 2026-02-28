@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
     GraduationCap, LogOut, Video, Library, ClipboardList, Target,
-    Calendar, Clock, Link as LinkIcon, FileText, CheckCircle2, ChevronRight, Lock
+    Calendar, Clock, Link as LinkIcon, FileText, ChevronRight, Lock, MessageCircle, Send, RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
     loginStudent, logoutStudent, getStudentSession,
-    getLiveClasses, getStudyMaterials, getAssignments, getOnlineTests
+    getLiveClasses, getStudyMaterials, getAssignments, getOnlineTests,
+    getOrCreateSupportThread, getSupportMessages, sendSupportMessage
 } from "@/app/actions/learning";
 
 export default function StudentPortal() {
@@ -34,6 +35,13 @@ export default function StudentPortal() {
     const [assignments, setAssignments] = useState<any[]>([]);
     const [tests, setTests] = useState<any[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(false);
+
+    // Support Chat State
+    const [supportThread, setSupportThread] = useState<any>(null);
+    const [supportMessages, setSupportMessages] = useState<any[]>([]);
+    const [newMessage, setNewMessage] = useState("");
+    const [isSendingMessage, setIsSendingMessage] = useState(false);
+    const [isLoadingChat, setIsLoadingChat] = useState(false);
 
     // Initialization: check session
     useEffect(() => {
@@ -99,6 +107,35 @@ export default function StudentPortal() {
             toast({ title: "Error", description: "An unexpected error occurred", variant: "destructive" });
         }
         setIsLoggingIn(false);
+    };
+
+    const loadSupportChat = async (studentDbId: string) => {
+        setIsLoadingChat(true);
+        try {
+            const thread = await getOrCreateSupportThread(studentDbId);
+            setSupportThread(thread);
+            const msgs = await getSupportMessages(thread.id);
+            setSupportMessages(msgs || []);
+        } catch (error) {
+            console.error("Chat load error:", error);
+        }
+        setIsLoadingChat(false);
+    };
+
+    const handleSendMessage = async () => {
+        if (!newMessage.trim() || !supportThread) return;
+        setIsSendingMessage(true);
+        const tempMsg = newMessage;
+        setNewMessage("");
+        try {
+            await sendSupportMessage(supportThread.id, 'student', tempMsg);
+            const msgs = await getSupportMessages(supportThread.id);
+            setSupportMessages(msgs || []);
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to send message", variant: "destructive" });
+            setNewMessage(tempMsg);
+        }
+        setIsSendingMessage(false);
     };
 
     const handleLogout = async () => {
@@ -185,10 +222,16 @@ export default function StudentPortal() {
                         { id: "materials", icon: Library, label: "Study Materials" },
                         { id: "assignments", icon: ClipboardList, label: "Assignments" },
                         { id: "tests", icon: Target, label: "Online Tests" },
+                        { id: "support", icon: MessageCircle, label: "Support / Chat" },
                     ].map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
+                            onClick={() => {
+                                setActiveTab(tab.id);
+                                if (tab.id === 'support' && student && !supportThread) {
+                                    loadSupportChat(student.id);
+                                }
+                            }}
                             className={`w-full flex items-center justify-between p-3 rounded-xl transition-all font-medium ${activeTab === tab.id
                                 ? "bg-indigo-600 text-white shadow-md shadow-indigo-900/20"
                                 : "hover:bg-slate-800 text-slate-400 hover:text-white"
@@ -393,6 +436,113 @@ export default function StudentPortal() {
                                 </Card>
                             ))
                         )}
+                    </div>
+                )}
+
+                {activeTab === "support" && (
+                    <div className="flex flex-col h-[calc(100vh-200px)] max-h-[700px]">
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center">
+                                    <MessageCircle className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h2 className="font-bold text-slate-900">Support Chat</h2>
+                                    <p className="text-xs text-slate-500">Ask questions or raise academic issues directly with admin</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                {supportThread && (
+                                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${supportThread.status === 'Resolved' ? 'bg-emerald-100 text-emerald-700' :
+                                        supportThread.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
+                                            'bg-amber-100 text-amber-700'
+                                        }`}>{supportThread.status}</span>
+                                )}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 text-slate-500"
+                                    onClick={() => student && loadSupportChat(student.id)}
+                                    disabled={isLoadingChat}
+                                >
+                                    <RefreshCw className={`w-4 h-4 ${isLoadingChat ? 'animate-spin' : ''}`} />
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Chat Window */}
+                        <div className="flex-1 bg-white rounded-2xl border border-slate-200 flex flex-col overflow-hidden shadow-sm">
+                            {isLoadingChat ? (
+                                <div className="flex-1 flex items-center justify-center">
+                                    <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                                </div>
+                            ) : !supportThread ? (
+                                <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+                                    <MessageCircle className="w-12 h-12 text-indigo-200 mb-4" />
+                                    <h3 className="font-bold text-slate-700 text-lg mb-2">Start a Conversation</h3>
+                                    <p className="text-slate-500 text-sm max-w-xs mb-6">Have a question for the admin? Send a message and they'll reply as soon as possible.</p>
+                                    <Button
+                                        className="bg-indigo-600 hover:bg-indigo-700"
+                                        onClick={() => student && loadSupportChat(student.id)}
+                                    >
+                                        Open Support Chat
+                                    </Button>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Messages Area */}
+                                    <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/50">
+                                        {supportMessages.length === 0 ? (
+                                            <div className="text-center p-8 text-slate-400 text-sm">
+                                                No messages yet. Send your first message below!
+                                            </div>
+                                        ) : (
+                                            supportMessages.map((msg) => (
+                                                <div key={msg.id} className={`flex ${msg.sender_role === 'student' ? 'justify-end' : 'justify-start'}`}>
+                                                    <div className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${msg.sender_role === 'student'
+                                                        ? 'bg-indigo-600 text-white rounded-br-sm'
+                                                        : 'bg-white text-slate-800 border border-slate-200 rounded-bl-sm'
+                                                        }`}>
+                                                        <div className="text-sm leading-relaxed">{msg.message}</div>
+                                                        <div className={`text-xs mt-1.5 ${msg.sender_role === 'student' ? 'text-indigo-200' : 'text-slate-400'}`}>
+                                                            {msg.sender_role === 'admin' && <span className="font-bold mr-1">Admin •</span>}
+                                                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {new Date(msg.created_at).toLocaleDateString()}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+
+                                    {/* Input Area */}
+                                    <div className="p-4 border-t border-slate-100 bg-white">
+                                        {supportThread.status === 'Resolved' ? (
+                                            <div className="text-center text-sm text-emerald-600 font-semibold py-2 bg-emerald-50 rounded-xl">
+                                                ✓ This issue has been marked as resolved by admin.
+                                            </div>
+                                        ) : (
+                                            <div className="flex gap-3">
+                                                <Input
+                                                    className="flex-1 h-12 bg-slate-50 border-slate-200 rounded-xl"
+                                                    placeholder="Type your message here..."
+                                                    value={newMessage}
+                                                    onChange={e => setNewMessage(e.target.value)}
+                                                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
+                                                />
+                                                <Button
+                                                    className="h-12 w-12 p-0 bg-indigo-600 hover:bg-indigo-700 rounded-xl shrink-0"
+                                                    onClick={handleSendMessage}
+                                                    disabled={isSendingMessage || !newMessage.trim()}
+                                                >
+                                                    <Send className="w-5 h-5" />
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 )}
             </main>
