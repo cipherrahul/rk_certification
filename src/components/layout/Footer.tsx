@@ -77,13 +77,14 @@ export default function Footer() {
                         <div className="space-y-6">
                             <h3 className="text-white font-bold text-lg">Institution</h3>
                             <ul className="space-y-4">
-                                {["About Us", "Our Branches", "Exam Results", "Verification", "Careers"].map((link) => (
+                                {["About Us", "Our Branches", "Exam Results", "My Timetable", "Verification", "Careers"].map((link) => (
                                     <li key={link}>
                                         <Link
                                             href={
                                                 link === 'Verification' ? '/verify' :
                                                     link === 'Exam Results' ? '/results' :
-                                                        '/contact'
+                                                        link === 'My Timetable' ? '/timetable' :
+                                                            '/contact'
                                             }
                                             className="hover:text-blue-400 transition-colors flex items-center group"
                                         >
