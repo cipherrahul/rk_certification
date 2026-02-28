@@ -55,7 +55,7 @@ export function PublicResultSearch() {
                     </div>
                     <Input
                         type="text"
-                        placeholder="e.g. RK20260001"
+                        placeholder="e.g. RK20240001"
                         value={studentId}
                         onChange={(e) => setStudentId(e.target.value)}
                         className="pl-12 h-14 text-lg font-black tracking-widest uppercase border-2 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500 rounded-2xl shadow-xl transition-all"

@@ -287,7 +287,7 @@ export async function generateOfferLetterPDF(data: OfferLetterFormValues, offerI
         finalBytes = await encryptPDF(
             pdfBytes,
             "",       // userPassword: no password to open
-            "RKI-OWNER-2026-SECURE" // ownerPassword
+            "RKI-OWNER-2024-SECURE" // ownerPassword
         );
     } catch {
         // Fallback: if encryption fails, use plain PDF
