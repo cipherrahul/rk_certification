@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, Pencil, Trash2 } from "lucide-react";
+import { Search, Pencil, Trash2, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,8 @@ import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { deleteStudentAction } from "@/lib/actions/student.action";
+import { deleteStudentAction, updateStudentPasswordAction } from "@/lib/actions/student.action";
+import { useToast } from "@/hooks/use-toast";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getFeeStatus(student: any) {
@@ -26,6 +27,23 @@ function getFeeStatus(student: any) {
 export function StudentTable({ students }: { students: any[] }) {
     const [search, setSearch] = useState("");
     const [feeFilter, setFeeFilter] = useState("All");
+    const { toast } = useToast();
+
+    const handleSetPassword = async (studentId: string, studentName: string) => {
+        const newPassword = prompt(`Enter new password for ${studentName}:`);
+        if (!newPassword) return;
+
+        try {
+            const res = await updateStudentPasswordAction(studentId, newPassword);
+            if (res.success) {
+                toast({ title: "Success", description: "Password updated successfully." });
+            } else {
+                toast({ title: "Error", description: res.error || "Failed to update password", variant: "destructive" });
+            }
+        } catch (error) {
+            toast({ title: "Error", description: "Unexpected error occurred.", variant: "destructive" });
+        }
+    };
 
     const filteredStudents = students.filter((student) => {
         // Search filter
@@ -137,6 +155,14 @@ export function StudentTable({ students }: { students: any[] }) {
                                                         <Pencil className="w-3.5 h-3.5 mr-1" /> Edit
                                                     </Button>
                                                 </Link>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-8 border-amber-200 text-amber-600 hover:bg-amber-50 hover:text-amber-600"
+                                                    onClick={() => handleSetPassword(student.id, student.first_name)}
+                                                >
+                                                    <Key className="w-3.5 h-3.5 mr-1" /> Password
+                                                </Button>
                                                 <Button
                                                     variant="outline"
                                                     size="sm"

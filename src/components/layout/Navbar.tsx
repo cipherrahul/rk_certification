@@ -9,8 +9,9 @@ import { GraduationCap, Menu, X } from 'lucide-react';
 const navLinks = [
     { href: '/', label: 'Home' },
     { href: '/about', label: 'About Us' },
-    { href: '/results', label: 'Student Results' },
     { href: '/timetable', label: 'My Timetable' },
+    { href: '/student', label: 'Student Portal' },
+    { href: '/results', label: 'Student Results' },
     { href: '/careers', label: 'Careers' },
     { href: '/verify', label: 'Verify Certificate' },
     { href: '/verify-receipt', label: 'Verify Fee Receipt' },

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GraduationCap, LayoutDashboard, FileBadge, Users, UserCog, LogOut, ChevronDown, FileText, Building, Briefcase, DollarSign, BookOpen, CalendarDays } from "lucide-react";
+import { GraduationCap, LayoutDashboard, FileBadge, Users, UserCog, LogOut, ChevronDown, FileText, Building, Briefcase, DollarSign, BookOpen, CalendarDays, Video, Library, ClipboardList, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -16,6 +16,10 @@ const navItems = [
     { name: "Offer Letters", href: "/admin/offer-letter", icon: FileText },
     { name: "Jobs", href: "/admin/jobs", icon: Briefcase },
     { name: "Expenses", href: "/admin/expenses", icon: DollarSign },
+    { name: "Live Classes", href: "/admin/learning/live-classes", icon: Video },
+    { name: "Materials", href: "/admin/learning/materials", icon: Library },
+    { name: "Assignments", href: "/admin/learning/assignments", icon: ClipboardList },
+    { name: "Online Tests", href: "/admin/learning/tests", icon: Target },
 ];
 
 interface AdminSidebarProps {
